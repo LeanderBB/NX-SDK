@@ -1,0 +1,12 @@
+#------------------------------------------------------------------------------
+# Auto Generated CMake configuration file for libnx.a
+#------------------------------------------------------------------------------
+
+set(NX_LIBRARIES @NXCORE_LIBRARIES@)
+
+set(NX_C_FLAGS "@CMAKE_C_FLAGS@")
+set(NX_CXX_FLAGS "@CMAKE_CXX_FLAGS@")
+set(NX_C_FLAGS_RELEASE "@CMAKE_C_FLAGS_RELEASE@")
+set(NX_CXX_FLAGS_RELEASE "@CMAKE_CXX_FLAGS_RELEASE@")
+set(NX_C_FLAGS_DEBUG "@CMAKE_C_FLAGS_DEBUG@")
+set(NX_CXX_FLAGS_DEBUG "@CMAKE_CXX_FLAGS_DEBUG@")

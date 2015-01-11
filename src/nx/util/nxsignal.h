@@ -1,0 +1,76 @@
+//
+// This file is part of the NX Project
+//
+// Copyright (c) 2014 Leander Beernaert
+//
+// NX Project is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// NX Project is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with NX. If not, see <http://www.gnu.org/licenses/>.
+//
+#ifndef __NX_SIGNAL_H__
+#define __NX_SIGNAL_H__
+
+#include "os/nxlock.h"
+
+namespace nx
+{
+
+class NXSignal
+{
+public:
+
+    NXSignal():
+        _cond(),
+        _lock(),
+        _signaled(false)
+    {
+    }
+
+    ~NXSignal()
+    {
+    }
+
+    void wait()
+    {
+        NXScopedLock l(_lock);
+        while (!_signaled)
+        {
+            _cond.wait(_lock);
+        }
+    }
+
+    void trigger()
+    {
+        NXScopedLock l(_lock);
+        _signaled = true;
+        _cond.signallAll();
+    }
+
+    void reset()
+    {
+        NXScopedLock l(_lock);
+        _signaled = false;
+    }
+
+
+private:
+    NX_CPP_NO_COPY(NXSignal);
+
+private:
+    NXCondition _cond;
+    NXLock _lock;
+    volatile bool _signaled;
+};
+
+}
+
+#endif

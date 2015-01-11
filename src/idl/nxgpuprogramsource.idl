@@ -1,0 +1,24 @@
+// NXGPUProgramSrc IDL
+
+namespace nx;
+
+enum FeedbackDataLayout : byte {
+	Packed = 0,
+	Separate
+}
+
+
+table ProgramSrc {	
+	name:string;
+  feedbackLayout:FeedbackDataLayout = Separate;
+	feedback: bool = false;
+	feedbackNames:[string];
+	vertex:[string];
+	fragment:[string];
+	geometry:[string];
+	tessEval:[string];
+	tessCont:[string];
+	compute:[string];
+}
+
+root_type ProgramSrc;
