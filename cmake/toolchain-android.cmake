@@ -35,6 +35,20 @@ if(DEFINED ANDROID_TOOLCHAIN_DIR AND NOT DEFINED ENV{ANDROID_TOOLCHAIN_DIR})
     set(ENV{ANDROID_TOOLCHAIN_DIR} ${ANDROID_TOOLCHAIN_DIR})
 endif()
 
+if(NOT DEFINED ANDROID_SDK_DIR)
+    if(DEFINED ENV{ANDROID_SDK_DIR})
+        set(ANDROID_SDK_DIR $ENV{ANDROID_SDK_DIR})
+    else()
+        message(SEND_ERROR "Please define ANDROID_SDK_DIR via cmake or as an env variable")
+    endif()
+
+    set(ENV{ANDROID_HOME} ${ANDROID_SDK_DIR})
+endif()
+
+if(DEFINED ANDROID_SDK_DIR AND NOT DEFINED ENV{ANDROID_SDK_DIR})
+    set(ENV{ANDROID_SDK_DIR} ${ANDROID_SDK_DIR})
+endif()
+
 set(ANDROID_ABI_ARM arm-linux-androideabi)
 set(ANDROID_ABI ${ANDROID_ABI_ARM})
 
@@ -52,8 +66,8 @@ set(CMAKE_ASM_COMPILER "${ANDROID_TOOLCHAIN_DIR}/bin/${ANDROID_ABI}-clang${TOOL_
 #endif()
 
 # specify the cross compiler
-SET(CMAKE_C_COMPILER   ${ANDROID_CC})
-SET(CMAKE_CXX_COMPILER ${ANDROID_CXX})
+SET(CMAKE_C_COMPILER   "${ANDROID_CC}")
+SET(CMAKE_CXX_COMPILER "${ANDROID_CXX}")
 
 
 #setup other tools
@@ -81,10 +95,10 @@ SET(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 set(ANDROID_C_FLAGS "-DANDROID -fpic -march=armv7-a -mfloat-abi=softfp -mfpu=neon -fstrict-aliasing")
 set(ANDROID_CXX_FLAGS "-DANDROID -fpic -march=armv7-a -mfloat-abi=softfp -mfpu=neon -fstrict-aliasing")
 set(ANDROID_LD_FLAGS "-march=armv7-a -Wl,--fix-cortex-a8")
-set(ANDROID_LIBS android)
+set(ANDROID_LIBS android log)
 
-set(CMAKE_C_FLAGS ${ANDROID_C_FLAGS})
-set(CMAKE_CXX_FLAGS ${ANDROID_CXX_FLAGS})
+set(CMAKE_C_FLAGS "${ANDROID_C_FLAGS}")
+set(CMAKE_CXX_FLAGS "${ANDROID_CXX_FLAGS}")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${ANDROID_LD_FLAGS}")
 set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${ANDROID_LD_FLAGS}")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${ANDROID_LD_FLAGS} -Wl,--no-undefined")

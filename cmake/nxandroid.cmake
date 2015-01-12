@@ -31,16 +31,17 @@ endfunction()
 # Generate the AndroidManifest.xml
 function(NX_ANDROID_GEN_FILES TARGET APP_NAME)
 
-    set(_android_manif ${CMAKE_CURRENT_BINARY_DIR}/${NX_ANDROID_BUILD_DIR_NAME}/AndroidManifest.xml)
-    set(_android_strings ${CMAKE_CURRENT_BINARY_DIR}/${NX_ANDROID_BUILD_DIR_NAME}/res/values/strings.xml)
-    set(_android_appmk ${CMAKE_CURRENT_BINARY_DIR}/${NX_ANDROID_BUILD_DIR_NAME}/jni/Application.mk)
-    set(_android_andmk ${CMAKE_CURRENT_BINARY_DIR}/${NX_ANDROID_BUILD_DIR_NAME}/jni/Android.mk)
+    set(_android_dir ${CMAKE_CURRENT_BINARY_DIR}/${NX_ANDROID_BUILD_DIR_NAME})
+    set(_android_manif ${_android_dir}/AndroidManifest.xml)
+    set(_android_strings ${_android_dir}/res/values/strings.xml)
+    set(_android_appmk ${_android_dir}/jni/Application.mk)
+    set(_android_andmk ${_android_dir}/jni/Android.mk)
 
     # write manifest
     file(WRITE ${_android_manif}
-"<?xml version=\"1.0\" encoding=\"utf-8'\"?> \n"
+"<?xml version=\"1.0\" encoding=\"utf-8\"?> \n"
 "    <manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"\n"
-"        package=\"com.example.native_activity\"\n"
+"        package=\"nx.samples.${TARGET}\"\n"
 "        android:versionCode=\"1\"\n"
 "        android:versionName=\"1.0\">\n"
 "    <uses-sdk android:minSdkVersion=\"${NX_ANDROID_PLATFORM}\" />\n"
@@ -61,7 +62,7 @@ function(NX_ANDROID_GEN_FILES TARGET APP_NAME)
 
     # write strings
     file(WRITE ${_android_strings}
-"<?xml version=\"1.0\" encoding=\"utf-8'\"?> \n"
+"<?xml version=\"1.0\" encoding=\"utf-8\"?> \n"
 "<resources>\n"
 "    <string name=\"app_name\">${APP_NAME}</string>\n"
 "</resources>"
@@ -79,8 +80,27 @@ function(NX_ANDROID_GEN_FILES TARGET APP_NAME)
     file(WRITE ${_android_andmk}
 "LOCAL_PATH := $(call my-dir)\n"
 "include $(CLEAR_VARS)\n"
-"LOCAL_MODULE := ${TARGET}-prebuilt\n"
+"LOCAL_MODULE := ${TARGET}\n"
 "LOCAL_SRC_FILES := ${_lib_location}\n"
 "include $(PREBUILT_SHARED_LIBRARY)\n"
     )
+    
+    # generate ant project
+    exec_program(${ANDROID_SDK_DIR}/tools/android
+        ARGS update project --name ${APP_NAME} --path ${_android_dir}/ --target "android-${NX_ANDROID_PLATFORM}"
+        RETURN_VALUE _ret_val
+    )
+    
+    if (NOT ${_ret_val} EQUAL 0)
+        message(SEND_ERROR "Failed to generate android project")
+    endif()
+    
+    # add ndk_build & apk gen 
+    add_custom_command(TARGET ${TARGET} POST_BUILD
+        COMMAND ant debug
+        WORKING_DIRECTORY ${_android_dir}
+        COMMENT "Generating Android APK for ${TARGET}"
+    )
+        
+     
 endfunction()
