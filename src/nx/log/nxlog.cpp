@@ -60,7 +60,7 @@ logInternal(const int prio,
             const char* format,
             va_list& args)
 {
-    __android_log_vprint(prio, "NX", format, args);
+    __android_log_vprint(prio, "NX-ANDROID", format, args);
 }
 
 #else

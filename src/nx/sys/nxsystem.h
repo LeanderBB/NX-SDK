@@ -19,7 +19,7 @@
 #ifndef __NX_SYSTEM_H__
 #define __NX_SYSTEM_H__
 
-
+#include "nx/event/nxeventmanager.h"
 #if defined(NX_SYSTEM_SDL2)
 #include "nx/sys/sdl/nxsystemsdl.h"
 #elif defined(NX_SYSTEM_ANDROID)
@@ -33,13 +33,14 @@ namespace nx
 
 struct NXAppOptions;
 class NXInputManager;
-class NXEventManager;
+class NXInputManager;
 class NXWindow;
 class NXSystem : NXSystemImp
 {
 public:
 
     NXSystem();
+
 
     bool init(const int argc,
               const char** argv,
@@ -51,13 +52,13 @@ public:
 
     NXEventManager* eventManager()
     {
-        return _pEvtMan;
+        return &_evtMan;
     }
 
-    NXWindow* window()
-    {
-        return _pWindow;
-    }
+
+    bool createWindow(const NXAppOptions* pOptions);
+
+    NXWindow* window();
 
     bool quit() const
     {
@@ -77,12 +78,28 @@ public:
     void setQuit()
     {
         _quit = true;
+        _pause = true;
+    }
+
+    void setInputManager(NXInputManager* pManager)
+    {
+        _pInputMan = pManager;
+    }
+
+    NXInputManager* inputManager()
+    {
+        return _pInputMan;
     }
 
 
+    void beginFrame();
+
+    void endFrame();
+
 protected:
-    NXEventManager* _pEvtMan;
-    NXWindow* _pWindow;
+    NXEventManager _evtMan;
+    NXInputManager* _pInputMan;
+
     volatile bool _quit;
     volatile bool _pause;
 

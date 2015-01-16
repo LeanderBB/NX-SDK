@@ -20,9 +20,17 @@
 #define __NX_SYSTEMANDROID_H__
 
 #if defined(NX_SYSTEM_ANDROID)
+extern "C"
+{
+struct android_app;
+}
+
 namespace nx
 {
-
+class NXInputManager;
+class NXEventManager;
+struct NXAppOptions;
+class NXWindow;
 class NXSystemImp
 {
 public:
@@ -32,11 +40,29 @@ public:
 
 protected:
     bool initImp(const int argc,
-                 const char** argv);
+                 const char** argv,
+                 const NXAppOptions *pOptions);
 
-    void termImp();
+    void termImp(NXEventManager* pEvtManager);
 
-    void tickImp();
+    void tickImp(NXInputManager* pInputManager);
+
+    bool createWindowImp(const struct NXAppOptions* pOptions,
+                         NXEventManager* pEvtManager);
+
+    NXWindow* windowImp();
+private:
+
+    bool createWindowInCallback(NXEventManager* pEvtManager);
+
+    void destroyWindowInCallback(NXEventManager* pEvtManager);
+
+    static void handleAppCmd(struct android_app* pApp,
+                             int32_t cmd);
+
+private:
+    NXWindow* _pWindow;
+    const NXAppOptions* _pOptions;
 };
 
 }

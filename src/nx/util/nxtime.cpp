@@ -22,30 +22,94 @@
 #if defined(NX_SYSTEM_SDL2)
 #include <SDL2/SDL_timer.h>
 #elif defined(NX_SYSTEM_ANDROID)
-
+#include <time.h>
 #endif
 
 namespace nx
 {
 
+#if defined(NX_SYSTEM_ANDROID)
+
+static struct timespec sTimeStart;
+static bool sTimeStarted = false;
+static void
+nxAndroidInitTime()
+{
+    if (sTimeStarted)
+    {
+        return;
+    }
+
+    if (clock_gettime(CLOCK_MONOTONIC, &sTimeStart) == 0)
+    {
+        sTimeStarted = true;
+    }
+    else
+    {
+        NXLogError("nxAndroidInitTime: Failed to init clock");
+        sTimeStarted = false;
+    }
+}
+
+#endif
+
+
 nx_u64
-NXGetPerformanceCounter()
+nxGetPerformanceCounter()
 {
 #if defined(NX_SYSTEM_SDL2)
     return SDL_GetPerformanceCounter();
+#elif defined(NX_SYSTEM_ANDROID)
+    nx_u64 ticks;
+    if (!sTimeStarted)
+    {
+        nxAndroidInitTime();
+    }
+
+    struct timespec now;
+
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    ticks = now.tv_sec;
+    ticks *= 1000000000;
+    ticks += now.tv_nsec;
+
+    return ticks;
 #else
-    NXLogError("NXGetPerformanceCounter not yet implemented");
+    NXLogError("nxGetPerformanceCounter not yet implemented");
     return 0;
 #endif
 }
 
 nx_u64
-NXGetPerformanceFrequency()
+nxGetPerformanceFrequency()
 {
- #if defined(NX_SYSTEM_SDL2)
-    return SDL_GetPerformanceFrequency();   
+#if defined(NX_SYSTEM_SDL2)
+    return SDL_GetPerformanceFrequency();
+#elif defined(NX_SYSTEM_ANDROID)
+    return 1000000000;
 #else
-    NXLogError("NXGetPerformanceFrequency not yet implemented");
+    NXLogError("nxGetPerformanceFrequency not yet implemented");
+               return 0;
+#endif
+}
+
+nx_u32 nxGetTicks()
+{
+#if defined(NX_SYSTEM_SDL2)
+    return SDL_GetTicks();
+#elif defined(NX_SYSTEM_ANDROID)
+    nx_u32 ticks;
+    if (!sTimeStarted)
+    {
+        nxAndroidInitTime();
+    }
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    ticks = (now.tv_sec - sTimeStart.tv_sec) * 1000 + (now.tv_nsec - sTimeStart.tv_nsec) / 1000000;
+
+    return ticks;
+#else
+    NXLogError("nxGetTicks not yet implemented");
     return 0;
 #endif
 }

@@ -17,7 +17,7 @@ if(NOT DEFINED ANDROID)
     find_package(OpenGL REQUIRED)
 else()
     set(NX_SYSTEM_ANDROID 1 CACHE INTERNAL "Use System Android")
-    set(OPENGL_LIBRARIES EGL GLESv3)
+    set(OPENGL_LIBRARIES EGL GLESv2)
 endif()
 
 # check string functions
@@ -148,6 +148,7 @@ set(PROJ_HDR
     nx/sys/sdl/nxsdlinput.h
     nx/sys/sdl/nxsystemsdl.h
     nx/sys/sdl/nxwindowsdl.h
+    nx/sys/android/nxandroidinput.h
     nx/sys/android/nxsystemandroid.h
     nx/sys/android/nxwindowandroid.h
     nx/sys/gl/core44/flextGL.h
@@ -216,6 +217,7 @@ set(PROJ_SRC
     nx/sys/sdl/nxsdlinput.cpp
     nx/sys/sdl/nxsystemsdl.cpp
     nx/sys/sdl/nxwindowsdl.cpp
+    nx/sys/android/nxandroidinput.cpp
     nx/sys/android/nxsystemandroid.cpp
     nx/sys/android/nxwindowandroid.cpp
     nx/sys/gl/core44/flextGL.c
@@ -238,6 +240,10 @@ set(PROJ_SRC
     nx/math/nxintersect.cpp
     nx/scene/nxscenebase.cpp
 )
+
+if(ANDROID)
+set(PROJ_SRC ${PROJ_SRC} nx/sys/android/android_native_app_glue.c)
+endif()
 
 add_library(${PROJ_NAME} STATIC  ${PROJ_HDR} ${PROJ_SRC})
 add_dependencies(${PROJ_NAME} YAAF glm)

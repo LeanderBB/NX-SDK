@@ -22,6 +22,7 @@
 #include "nx/sys/nxsystem.h"
 #include "nx/sys/nxinputmanager.h"
 #include "nx/allocator/nxmemory.h"
+#include "nx/event/nxeventlistener.h"
 
 namespace nx
 {
@@ -37,18 +38,15 @@ struct NXAppOptions
     bool dbgctx;
 };
 
-class NXApp
+class NXApp : public NXEventListener
 {
 public:
     virtual ~NXApp();
 
-    bool init(const int argc, const char** argv);
-
-    void run();
+    int run(const int argc,
+            const char** argv);
 
     void quit();
-
-    void term();
 
     const char* name() const
     {
@@ -69,16 +67,29 @@ protected:
 
     NXApp(const char* name);
 
+    bool init(const int argc, const char** argv);
+
+
     virtual void setAppOptions(const int ,
                                const char**,
                                NXAppOptions&) {}
 
-    virtual bool appInit(const int ,
-                         const char**) { return true; }
+    void term();
+
+    virtual bool handleEvent(const NXEventData* pEvtData);
+
+    virtual bool onAppInit(const int,
+                           const char**) { return true;}
+
+    virtual void onAppWillTerm() {}
+
+    virtual void onWindowCreated() = 0;
+
+    virtual void onWindowWillBeDestroyed() = 0;
+
+    virtual void onSystemLowMemory() {}
 
     virtual void appRun() = 0;
-
-    virtual void appTerm() {}
 
 private:
     const NXString _name;
@@ -88,18 +99,22 @@ private:
 };
 
 
+#if defined(NX_OS_ANDROID)
+#define NX_MAIN_ENTRY nx_android_main
+#else
+#define NX_MAIN_ENTRY main
+#endif
 #define NX_APP(CLASS) \
-    int main(const int argc, const char** argv)\
+    int NX_MAIN_ENTRY (const int argc, const char **argv); \
+int NX_MAIN_ENTRY (const int argc, \
+                   const char** argv)\
 { \
-{ \
-    CLASS app; \
-    if (app.init(argc, argv)) \
-{ \
-    app.run(); \
-} \
-    app.term(); \
-} \
-    return EXIT_SUCCESS; \
+    int exit_code; \
+    { \
+        CLASS app; \
+        exit_code = app.run(argc, argv); \
+    } \
+    return exit_code;\
 }
 
 }

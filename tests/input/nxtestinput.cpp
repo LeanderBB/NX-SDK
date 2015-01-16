@@ -74,21 +74,25 @@ public:
 
     }
 
-    virtual bool appInit(const int , const char**)
+    virtual bool onAppInit(const int , const char**) override
     {
         inputManager()->addInputCtx(&_inputCtx);
         return true;
     }
 
-    virtual void appRun()
+    virtual void appRun() override
     {
-        inputManager()->tick();
+
     }
 
-    virtual void appTerm()
+    virtual void onAppWillTerm() override
     {
         inputManager()->remInputCtx(&_inputCtx);
     }
+
+    virtual void onWindowCreated() override {}
+
+    virtual void onWindowWillBeDestroyed() override {}
 
 private:
     NXTestInputCtx _inputCtx;

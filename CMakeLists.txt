@@ -15,6 +15,7 @@ set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 # Compiler Settings
 include(cmake/nxcrosscompile.cmake)
 include(cmake/nxcompiler.cmake)
+include(cmake/nxapp.cmake)
 
 # 3rdParty variables
 add_subdirectory(3rdparty)

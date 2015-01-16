@@ -40,7 +40,7 @@ NXEventManager::~NXEventManager()
 void
 NXEventManager::update(const nx_u64 maxDurationMiliSec)
 {
-    nx_u64 cur_time = NXTimeInMiliSeconds();
+    nx_u64 cur_time = nxTimeInMiliSeconds();
     nx_u64 expired_time = (maxDurationMiliSec == NX_U64_MAX) ? NX_U64_MAX : (cur_time + maxDurationMiliSec);
     int cur_queue = _activeQueue;
     _activeQueue = (cur_queue + 1) % kNumEvtQueues;
@@ -53,7 +53,7 @@ NXEventManager::update(const nx_u64 maxDurationMiliSec)
         _evtQueues[cur_queue].pop_front();
         // cleanup memory
         delete p_evt;
-        cur_time = NXTimeInMiliSeconds();
+        cur_time = nxTimeInMiliSeconds();
         if (cur_time > expired_time)
         {
             NXLogWarning("EvtentManager: Could not process all events in allotted time. Remaining events will be added to the queue");

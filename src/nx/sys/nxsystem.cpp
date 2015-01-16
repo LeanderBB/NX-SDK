@@ -31,12 +31,17 @@ namespace nx
 {
 
 NXSystem::NXSystem():
-    _pEvtMan(nullptr),
-    _pWindow(nullptr),
+    _evtMan(),
     _quit(false),
-    _pause(false)
+    _pause(true)
 {
-
+    // register event types
+    _evtMan.addEvent(NXSysEvtLowMem::sEvtType);
+    _evtMan.addEvent(NXSysEvtWinHide::sEvtType);
+    _evtMan.addEvent(NXSysEvtWinShow::sEvtType);
+    _evtMan.addEvent(NXSysEvtWinResize::sEvtType);
+    _evtMan.addEvent(NXSysEvtWinCreated::sEvtType);
+    _evtMan.addEvent(NXSysEvtWinDestroy::sEvtType);
 }
 
 bool
@@ -44,48 +49,10 @@ NXSystem::init(const int argc,
                const char** argv,
                const NXAppOptions *pOptions)
 {
-    (void) argc;
-    (void) argv;
-    if (!_pWindow)
+
+    if (!NXSystemImp::initImp(argc, argv, pOptions))
     {
-
-        if (!NXSystemImp::initImp(argc, argv))
-        {
-            return false;
-        }
-
-        // create event and input manager
-        _pEvtMan = new NXEventManager();
-
-        // create window
-        _pWindow = new NXWindow("NX");
-
-        bool depth = false, stencil = false, dbgctx = false, resizable = false;
-        if (pOptions)
-        {
-            _pWindow->setDimensions(pOptions->width, pOptions->height);
-            _pWindow->setFullscreen(pOptions->fullscreen);
-            depth = pOptions->depth;
-            stencil = pOptions->stencil;
-            dbgctx = pOptions->dbgctx;
-            resizable = pOptions->resizable;
-        }
-
-        if (!_pWindow->create(depth, stencil, resizable, dbgctx))
-        {
-            return false;
-        }
-
-        // register event types
-        _pEvtMan->addEvent(NXSysEvtLowMem::sEvtType);
-        _pEvtMan->addEvent(NXSysEvtWinHide::sEvtType);
-        _pEvtMan->addEvent(NXSysEvtWinShow::sEvtType);
-        _pEvtMan->addEvent(NXSysEvtWinResize::sEvtType);
-
-    }
-    else
-    {
-        NXLogWarning("NXSystem init is called more than once!");
+        return false;
     }
 
     return true;
@@ -94,28 +61,41 @@ NXSystem::init(const int argc,
 void
 NXSystem::term()
 {
-    if (_pWindow)
-    {
-        // unregister events
-        _pEvtMan->removeEvent(NXSysEvtWinResize::sEvtType);
-        _pEvtMan->removeEvent(NXSysEvtWinShow::sEvtType);
-        _pEvtMan->removeEvent(NXSysEvtWinHide::sEvtType);
-        _pEvtMan->removeEvent(NXSysEvtLowMem::sEvtType);
+    NXSystemImp::termImp(&_evtMan);
+}
 
-        _pEvtMan->clear();
-        NX_SAFE_DELETE(_pEvtMan)
-        // destroy window
-        _pWindow->destroy();
-        NX_SAFE_DELETE(_pWindow);
+bool
+NXSystem::createWindow(const NXAppOptions* pOptions)
+{
+    return NXSystemImp::createWindowImp(pOptions, &_evtMan);
+}
 
-        NXSystemImp::termImp();
-    }
+NXWindow*
+NXSystem::window()
+{
+   return NXSystemImp::windowImp();
 }
 
 void
 NXSystem::tick()
 {
-    NXSystemImp::tickImp();
+    NXSystemImp::tickImp(_pInputMan);
+}
+
+void
+NXSystem::beginFrame()
+{
+    _evtMan.update();
+}
+
+void
+NXSystem::endFrame()
+{
+    NXWindow* p_window = NXSystemImp::windowImp();
+    if (p_window)
+    {
+        p_window->swapBuffers();
+    }
 }
 
 }

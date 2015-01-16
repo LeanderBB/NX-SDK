@@ -41,8 +41,18 @@ public:
 
     virtual void appRun()
     {
-        nx::NX3D::log3DInfo();
+
         quit();
+    }
+
+    virtual void onWindowCreated()
+    {
+        nx::NX3D::log3DInfo();
+    }
+
+    virtual void onWindowWillBeDestroyed()
+    {
+
     }
 
 };

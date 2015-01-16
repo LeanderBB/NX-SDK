@@ -39,7 +39,7 @@ NXTask::wait()
 {
     while(!_finished)
     {
-        NXSleepMicro(3);
+        nxSleepMicro(3);
     }
 }
 

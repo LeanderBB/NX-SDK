@@ -25,7 +25,10 @@
 
 namespace nx
 {
-
+class NXInputManager;
+class NXWindow;
+class NXEventManager;
+struct NXAppOptions;
 class NXSystemImp
 {
 public:
@@ -35,15 +38,26 @@ public:
 
 protected:
     bool initImp(const int argc,
-                 const char** argv);
+                 const char** argv,
+                 const struct NXAppOptions* pOptions);
 
-    void termImp();
+    void termImp(NXEventManager* pEvtManager);
 
-    void tickImp();
+    void tickImp(NXInputManager* pInputManager);
+
+    bool createWindowImp(const struct NXAppOptions* pOptions,
+                         NXEventManager* pEvtManager);
+
+    NXWindow* windowImp()
+    {
+        return _pWindow;
+    }
 
 private:
     static int systemEventHandler(void *pUserData,
                                   SDL_Event* pEvent);
+
+    NXWindow* _pWindow;
 };
 
 }

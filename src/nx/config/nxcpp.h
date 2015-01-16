@@ -32,6 +32,8 @@
 #include <atomic>
 #include <string>
 
+#define NX_CPP_OVERRIDE override
+
 
 #define NX_CPP_NO_COPY(C) \
     C& operator = (const C&);\

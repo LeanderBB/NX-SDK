@@ -24,7 +24,7 @@ namespace nx
 {
 
 NX_INLINE nx_timems
-NXTimeInMiliSeconds()
+nxTimeInMiliSeconds()
 {
 struct timeval now;
 gettimeofday(&now, nullptr);
@@ -33,7 +33,7 @@ return (now.tv_sec * 1000) + (now.tv_usec / 1000);
 
 
 NX_INLINE nx_timems
-NXTimeInMicroSeconds()
+nxTimeInMicroSeconds()
 {
 struct timeval now;
 gettimeofday(&now, nullptr);
@@ -41,15 +41,15 @@ return (now.tv_sec * 1000000) + (now.tv_usec);
 }
 
 NX_INLINE double
-NXTimeInSeconds()
+nxTimeInSeconds()
 {
-struct timeval now;
-gettimeofday(&now, nullptr);
-return (double)(now.tv_sec) + ((double)now.tv_usec / 1000000.0);
+    struct timeval now;
+    gettimeofday(&now, nullptr);
+    return (double)(now.tv_sec) + ((double)now.tv_usec / 1000000.0);
 }
 
 NX_INLINE void
-NXTimeAsHMS(int& h, int& m, int& s)
+nxTimeAsHMS(int& h, int& m, int& s)
 {
     struct timeval now;
     gettimeofday(&now, nullptr);
@@ -59,20 +59,22 @@ NXTimeAsHMS(int& h, int& m, int& s)
 }
 
 NX_INLINE void
-NXSleep(nx_u32 seconds)
+nxSleep(nx_u32 seconds)
 {
     ::sleep(seconds);
 }
 
 NX_INLINE void
-NXSleepMicro(nx_u32 microseconds)
+nxSleepMicro(nx_u32 microseconds)
 {
     ::usleep(microseconds);
 }
 
-nx_u64 NXGetPerformanceCounter();
+nx_u64 nxGetPerformanceCounter();
 
-nx_u64 NXGetPerformanceFrequency();
+nx_u64 nxGetPerformanceFrequency();
+
+nx_u32 nxGetTicks();
 
 }
 

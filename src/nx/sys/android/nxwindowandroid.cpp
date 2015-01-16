@@ -21,11 +21,18 @@
 #include "nx/sys/android/nxwindowandroid.h"
 #include "nx/sys/gl/core44/flextGL.h"
 #include "nx/sys/nxwindow.h"
+#include "nx/sys/android/android_native_app_glue.h"
 
 
 namespace nx
 {
-NXWindowImp::NXWindowImp()
+
+extern struct android_app* g_pAndroidApp;
+
+NXWindowImp::NXWindowImp():
+    _display(nullptr),
+    _surface(nullptr),
+    _context(nullptr)
 {
 }
 
@@ -44,6 +51,7 @@ void
 NXWindowImp::setDimensionsImp(const nx_u32 width,
                               const nx_u32 height)
 {
+    NXLogWarning("NXWindowImp::setDimensionsImp Not available on Android");
     (void) width;
     (void) height;
 }
@@ -52,8 +60,8 @@ void
 NXWindowImp::dimensionsImp(nx_i32 &width,
                            nx_i32 &height)
 {
-    (void) width;
-    (void) height;
+    eglQuerySurface(_display, _surface, EGL_WIDTH, &width);
+    eglQuerySurface(_display, _surface, EGL_WIDTH, &height);
 }
 
 bool
@@ -61,63 +69,131 @@ NXWindowImp::createImp(struct NXWindowDesc& desc)
 {
     (void) desc;
 
-    return false;
+    const EGLint attribs[] = {
+            EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+            EGL_BLUE_SIZE, 8,
+            EGL_GREEN_SIZE, 8,
+            EGL_RED_SIZE, 8,
+            EGL_DEPTH_SIZE, (desc.depth ? 24 : 0),
+            EGL_STENCIL_SIZE, (desc.stencil ? 8 : 0),
+            EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
+            EGL_NONE
+    };
+
+    _display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+
+    if (eglInitialize(_display, 0, 0) != EGL_TRUE)
+    {
+        NXLogError("NXWindowImp::createImp: Failed to initialize EGL");
+        return false;
+    }
+
+    if(eglBindAPI(EGL_OPENGL_API) != EGL_TRUE)
+    {
+        NXLogError("NXWindowImp::createImp: Failed To Bind OpenGL API");
+        return false;
+    }
+    EGLint format, num_configs;
+    EGLConfig config;
+
+    if(eglChooseConfig(_display, attribs, &config, 1, &num_configs) != EGL_TRUE)
+    {
+        NXLogError("NXWindowImp::createImp: Failed to select EGL config");
+        return false;
+    }
+
+    if(eglGetConfigAttrib(_display, config, EGL_NATIVE_VISUAL_ID, &format) != EGL_TRUE)
+    {
+        NXLogError("NXWindowImp::createImp: Failed to get EGL config attrib");
+        return false;
+    }
+
+    ANativeWindow_setBuffersGeometry(g_pAndroidApp->window, 0, 0, format);
+
+    _surface = eglCreateWindowSurface(_display, config, g_pAndroidApp->window, NULL);
+    _context = eglCreateContext(_display, config, NULL, NULL);
+
+    if (!bindImp())
+    {
+        NXLogError("NXWindowImp::createImp: Failed to create EGL window/context");
+        return false;
+    }
+
+    if (flextInit() != GL_TRUE)
+    {
+        NXLogError("NXWindow::create Failed to load all required OpenGL function. \
+                   Please make sure you have an OpenGL 4.4 capable device");
+                   return false;
+    }
+
+    return true;
 }
 
 void
 NXWindowImp::destroyImp()
 {
+    if (_display != EGL_NO_DISPLAY)
+    {
+        unbindImp();
 
+        if (_context != EGL_NO_CONTEXT)
+        {
+            eglDestroyContext(_display, _context);
+        }
+        if (_surface != EGL_NO_SURFACE)
+        {
+            eglDestroySurface(_display, _surface);
+        }
+        eglTerminate(_display);
+        _display = EGL_NO_DISPLAY;
+        _context = EGL_NO_CONTEXT;
+        _surface = EGL_NO_SURFACE;
+    }
 }
 
-bool
-NXWindowImp::makeCurrentImp(void *pWin,
-                            void *pCtx)
-{
-    (void) pWin;
-    (void) pCtx;
-    return false;
-}
 
 bool
 NXWindowImp::bindImp()
 {
-    return false;
+    return EGL_TRUE == eglMakeCurrent(_display, _surface, _surface, _context);
 }
 
 bool
 NXWindowImp::unbindImp()
 {
-    return false;
+    return EGL_TRUE == eglMakeCurrent(_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 }
 
 void
 NXWindowImp::setFullscreenImp(const bool fullscreen)
 {
     (void) fullscreen;
+    NXLogWarning("NXWindowImp::setFullscreenImp Not available on Android");
 }
 
 void
 NXWindowImp::hideImp()
 {
+    NXLogWarning("NXWindowImp::hideImp Not available on Android");
 }
 
 void
 NXWindowImp::showImp()
 {
-
+    NXLogWarning("NXWindowImp::showImp Not available on Android");
 }
 
 void
 NXWindowImp::swapBuffersImp()
 {
-
+    eglSwapBuffers(_display, _surface);
 }
 
 void
 NXWindowImp::setCaptureInputImp(const bool b)
 {
     (void)b;
+    NXLogWarning("NXWindowImp::setCaptureInputImp Not available on Android");
 }
 
 }

@@ -20,7 +20,6 @@
 #include "nx/nxcore.h"
 #include "nx/sys/nxinputmanager.h"
 #include "nx/sys/nxinputctx.h"
-#include "nx/sys/sdl/nxsdlinput.h"
 
 namespace nx
 {
@@ -29,9 +28,7 @@ NXInputManager::NXInputManager():
     _inputs(),
     _activeKeyMods(0)
 {
-#if defined(NX_SYSTEM_SDL2)
-    NXSetupSDLKeys();
-#endif
+
 }
 
 NXInputManager::~NXInputManager()
@@ -151,14 +148,6 @@ NXInputManager::postEvent(const NXInputEvent& evt)
     {
         abort = (*it)->handleInputEvent(evt);
     }
-}
-
-void
-NXInputManager::tick()
-{
-#if defined(NX_SYSTEM_SDL2)
-    NXProcessSDLInput(this);
-#endif
 }
 
 void

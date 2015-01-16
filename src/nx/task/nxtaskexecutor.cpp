@@ -36,7 +36,7 @@ NXTaskExecutor::run()
         else
         {
             // no task to execute, sleep
-            NXSleepMicro(3);
+            nxSleepMicro(3);
         }
     }
     NXLog("TaskExecutor (%s) Finished", _name.c_str());

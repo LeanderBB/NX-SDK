@@ -13,7 +13,7 @@ endif()
 
 function(NX_CREATE_APP)
     set(options SKIP_ARCHIVE)
-    set(oneValueArgs NAME EXEC_NAME DATA_DIR SHADER_DIR ARCHIVE_NAME)
+    set(oneValueArgs NAME EXEC_NAME DATA_DIR SHADER_DIR ARCHIVE_NAME PACKAGE)
     set(multiValueArgs SOURCES HEADERS ARCHIVE_DIRS PROGRAMS)
 
     cmake_parse_arguments(NX_CREATE_APP "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )

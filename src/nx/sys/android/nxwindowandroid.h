@@ -20,6 +20,7 @@
 #define __NX_WINDOWANDROID_H__
 
 #if defined(NX_SYSTEM_ANDROID)
+#include <EGL/egl.h>
 namespace nx
 {
 
@@ -44,9 +45,6 @@ protected:
 
     void destroyImp();
 
-    static bool makeCurrentImp(void *pWin,
-                               void *pCtx);
-
     bool bindImp();
 
     bool unbindImp();
@@ -61,7 +59,9 @@ protected:
 
     void setCaptureInputImp(const bool b);
 private:
-
+    EGLDisplay _display;
+    EGLSurface _surface;
+    EGLContext _context;
 };
 
 }

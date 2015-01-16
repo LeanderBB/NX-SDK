@@ -24,12 +24,14 @@
 #include "nx/sys/nxsystem.h"
 #include "nx/event/nxeventmanager.h"
 #include "nx/sys/nxwindow.h"
-
+#include "nx/sys/sdl/nxsdlinput.h"
+#include "nx/sys/nxapp.h"
 
 namespace nx
 {
 
-NXSystemImp::NXSystemImp()
+NXSystemImp::NXSystemImp():
+    _pWindow(nullptr)
 {
 
 }
@@ -41,8 +43,10 @@ NXSystemImp::~NXSystemImp()
 
 bool
 NXSystemImp::initImp(const int argc,
-                     const char** argv)
+                     const char** argv,
+                     const struct NXAppOptions* pOptions)
 {
+    (void) pOptions;
     (void) argc;
     (void) argv;
 
@@ -56,21 +60,65 @@ NXSystemImp::initImp(const int argc,
     // register custom system event filter
     SDL_SetEventFilter(systemEventHandler, this);
 
+    NXSetupSDLKeys();
+
+    return true;
+}
+
+bool
+NXSystemImp::createWindowImp(const NXAppOptions *pOptions,
+                             NXEventManager *pEvtManager)
+{
+    NX_ASSERT(pEvtManager);
+    // create window
+    _pWindow = new NXWindow("NX");
+
+    bool depth = false, stencil = false, dbgctx = false, resizable = false;
+    if (pOptions)
+    {
+        _pWindow->setDimensions(pOptions->width, pOptions->height);
+        _pWindow->setFullscreen(pOptions->fullscreen);
+        depth = pOptions->depth;
+        stencil = pOptions->stencil;
+        dbgctx = pOptions->dbgctx;
+        resizable = pOptions->resizable;
+    }
+
+    if (!_pWindow->create(depth, stencil, resizable, dbgctx))
+    {
+        return false;
+    }
+
+    NXSysEvtWinCreated evt_created;
+    pEvtManager->trigger(&evt_created);
     return true;
 }
 
 void
-NXSystemImp::termImp()
+NXSystemImp::termImp(NXEventManager* pEvtManager)
 {
+    NX_ASSERT(pEvtManager);
+    NXSysEvtWinDestroy evt_destroy;
+    if (_pWindow)
+    {
+        pEvtManager->trigger(&evt_destroy);
+        _pWindow->destroy();
+        NX_SAFE_DELETE(_pWindow);
+    }
+
     // shutdown sdl
     SDL_Quit();
 }
 
 
 void
-NXSystemImp::tickImp()
+NXSystemImp::tickImp(NXInputManager* pInputManager)
 {
     SDL_PumpEvents();
+    if (pInputManager)
+    {
+        NXProcessSDLInput(pInputManager);
+    }
 }
 
 int

@@ -99,8 +99,6 @@ public:
 
 protected:
     friend class NXSystem;
-    static bool makeCurrent(void* pWin,
-                            void* pCtx);
 
 private:
     NX_CPP_NO_COPY(NXWindow);

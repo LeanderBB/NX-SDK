@@ -29,7 +29,9 @@ enum SystemEvent
     kSystemEventWinHide = 0x9a902217,
     kSystemEventWinShow = 0xbf6d0d9f,
     kSystemEventWinResize = 0xde26a4d3,
-    kSystemEventLowMem = 0xe96e04b
+    kSystemEventLowMem = 0xe96e04b,
+    kSystemEventWinCreated = 0xceae7329,
+    kSystemEventWinDestroy = 0x00d942ea
 };
 
 /// Event thrown in case of a window resize
@@ -97,6 +99,37 @@ public:
     }
 
     ~NXSysEvtWinShow(){}
+};
+
+/// Event triggered when window created
+class NXSysEvtWinCreated: public NXEventData
+{
+public:
+
+    static const nx_u32 sEvtType;
+
+    NXSysEvtWinCreated():
+        NXEventData(sEvtType)
+    {
+    }
+
+    ~NXSysEvtWinCreated(){}
+};
+
+
+/// Event triggered when window will be destroyed
+class NXSysEvtWinDestroy: public NXEventData
+{
+public:
+
+    static const nx_u32 sEvtType;
+
+    NXSysEvtWinDestroy():
+        NXEventData(sEvtType)
+    {
+    }
+
+    ~NXSysEvtWinDestroy(){}
 };
 }
 

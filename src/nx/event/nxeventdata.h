@@ -19,6 +19,8 @@
 #ifndef __NX_EVENTDATA_H__
 #define __NX_EVENTDATA_H__
 
+#include "nx/util/nxtime.h"
+
 namespace nx
 {
 
@@ -28,18 +30,18 @@ public:
     virtual ~NXEventData(){}
 
      const nx_u32 type;
-     const float timestamp;
+     const nx_u32 timestamp;
 
 protected:
 
     NXEventData(const nx_u32 evttype):
         type(evttype),
-        timestamp(static_cast<float>(NXTimeInSeconds()))
+        timestamp(static_cast<float>(nxGetTicks()))
     {
     }
 
     NXEventData(const nx_u32 evttype,
-                const float evttimestamp):
+                const nx_u32 evttimestamp):
         type(evttype),
         timestamp(evttimestamp)
     {

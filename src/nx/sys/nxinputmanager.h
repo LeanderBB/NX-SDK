@@ -43,8 +43,6 @@ public:
 
     void postScrollEvent(const NXInputScrollEvent& evt);
 
-    void tick();
-
     void clear();
 
 protected:

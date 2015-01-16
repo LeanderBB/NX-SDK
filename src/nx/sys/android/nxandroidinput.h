@@ -16,23 +16,22 @@
 // You should have received a copy of the GNU General Public License
 // along with NX. If not, see <http://www.gnu.org/licenses/>.
 //
+#ifndef __NX_ANDROIDINPUT_H__
+#define __NX_ANDROIDINPUT_H__
 
-#include "nx/nxcore.h"
-#include "nx/sys/nxsysevents.h"
 
+#if defined(NX_SYSTEM_ANDROID)
+
+#include <android/native_activity.h>
 namespace nx
 {
 
-const nx_u32 NXSysEvtWinResize::sEvtType = kSystemEventWinResize;
+class NXInputManager;
 
-const nx_u32 NXSysEvtLowMem::sEvtType = kSystemEventLowMem;
-
-const nx_u32 NXSysEvtWinHide::sEvtType = kSystemEventWinHide;
-
-const nx_u32 NXSysEvtWinShow::sEvtType =kSystemEventWinShow;
-
-const nx_u32 NXSysEvtWinCreated::sEvtType = kSystemEventWinCreated;
-
-const nx_u32 NXSysEvtWinDestroy::sEvtType = kSystemEventWinDestroy;
+int32_t nxProcessAndroidInput(NXInputManager* pInputManager,
+                              AInputEvent* event);
 
 }
+#endif // defined(NX_SYSTEM_ANDROID)
+
+#endif

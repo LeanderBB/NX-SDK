@@ -24,8 +24,13 @@ namespace nx
 // -- NXOGLTexutre Binder-------------------------------------------------------
 // According to OpenGL Spec
 #define NX_MAX_ACTIVE_TEX_UNITS 32
+#if !defined(NX_OS_ANDROID)
 static __thread nx_u32 sActiveTexureList[NX_MAX_ACTIVE_TEX_UNITS][kGPUTextureTypeTotal] = {{0}};
 static __thread nx_u32 sActiveIdx = 0;
+#else
+static nx_u32 sActiveTexureList[NX_MAX_ACTIVE_TEX_UNITS][kGPUTextureTypeTotal] = {{0}};
+static nx_u32 sActiveIdx = 0;
+#endif
 static const GLenum sGLTextureTypes[] =
 {
     GL_TEXTURE_2D,

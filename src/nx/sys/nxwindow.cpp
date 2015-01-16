@@ -176,13 +176,6 @@ NXWindow::unbind()
     return NXWindowImp::unbindImp();
 }
 
-bool
-NXWindow::makeCurrent(void *pWin,
-                      void *pCtx)
-{
-    return NXWindowImp::makeCurrentImp(pWin, pCtx);
-}
-
 void
 NXWindow::setFullscreen(const bool fullscreen)
 {

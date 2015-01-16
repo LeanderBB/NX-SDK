@@ -81,11 +81,16 @@ protected:
 
     void appTerm();
 
+    void onWindowCreated();
+
+    void onWindowWillBeDestroyed();
+
 
 private:
     NXFileManager _fileManager;
     NXOGLTexture* _pTex;
     NXOGLProgram* _pProg;
+    NXIOFile* _pFile;
     GLuint _vao;
     GLint _locWinWidth;
     GLint _locWinHeight;
@@ -96,6 +101,7 @@ NXImageViewer::NXImageViewer():
     NXApp("NXImageViewer"),
     _pTex(nullptr),
     _pProg(nullptr),
+    _pFile(nullptr),
     _locWinWidth(-1),
     _locWinHeight(-1)
 {
@@ -124,65 +130,14 @@ NXImageViewer::appInit(const int argc,
     }
 
     // open file
-    NXIOFile* p_file = NXIOFile::open(argv[1], kIOAccessModeReadBit);
+    _pFile = NXIOFile::open(argv[1], kIOAccessModeReadBit);
 
-    if (!p_file)
+    if (!_pFile)
     {
         NXLogError("Failed to open '%s'\n", argv[1]);
         return false;
     }
 
-    // load image
-    NXImage* p_imgsrc = NXImage::load(p_file);
-    // close io
-    NX_SAFE_DELETE(p_file);
-
-    if (!p_imgsrc)
-    {
-        return false;
-    }
-
-    NXImage::ImageInfo(p_imgsrc->header());
-
-    // create ogl tex
-    _pTex = NXOGLTexture::create(*p_imgsrc);
-    // delete img source
-    p_imgsrc->unload();
-    NX_SAFE_DELETE(p_imgsrc);
-
-    if (!_pTex)
-    {
-        return false;
-    }
-
-    NXGPUProgramSourceManual prg_src;
-
-    prg_src.setSourceVertex(s_vertex_source);
-    prg_src.setSourceFragment(s_fragment_source);
-
-    _pProg = NXOGLProgram::create(&prg_src);
-
-    if (!_pProg)
-    {
-        return false;
-    }
-
-    // locate uniforms
-
-    _locWinWidth = glGetUniformLocation(_pProg->oglHdl(), "window_width");
-    _locWinHeight = glGetUniformLocation(_pProg->oglHdl(), "window_height");
-
-    if (_locWinHeight == -1 || _locWinWidth == -1)
-    {
-        NXLogError("Failed to locate uniforms");
-        return false;
-    }
-
-    glGenVertexArrays(1, &_vao);
-    glBindVertexArray(_vao);
-    glBindTexture(_pTex->oglType(), _pTex->oglHdl());
-
-    system()->window()->setDimensions(_pTex->desc().width, _pTex->desc().height);
     return true;
 }
 
@@ -203,6 +158,79 @@ NXImageViewer::appRun()
 void
 NXImageViewer::appTerm()
 {
+    if (_pFile)
+    {
+        NX_SAFE_DELETE(_pFile);
+    }
+    _fileManager.clear();
+}
+
+void
+NXImageViewer::onWindowCreated()
+{
+
+    // reset seek
+    _pFile->seek(0, kIOSeekOpSet);
+
+    // load image
+    NXImage* p_imgsrc = NXImage::load(_pFile);
+
+
+    if (!p_imgsrc)
+    {
+        quit();
+        return;
+    }
+
+    NXImage::ImageInfo(p_imgsrc->header());
+
+    // create ogl tex
+    _pTex = NXOGLTexture::create(*p_imgsrc);
+    // delete img source
+    p_imgsrc->unload();
+    NX_SAFE_DELETE(p_imgsrc);
+
+    if (!_pTex)
+    {
+        quit();
+        return;
+    }
+
+    NXGPUProgramSourceManual prg_src;
+
+    prg_src.setSourceVertex(s_vertex_source);
+    prg_src.setSourceFragment(s_fragment_source);
+
+    _pProg = NXOGLProgram::create(&prg_src);
+
+    if (!_pProg)
+    {
+        quit();
+        return;
+    }
+
+    // locate uniforms
+
+    _locWinWidth = glGetUniformLocation(_pProg->oglHdl(), "window_width");
+    _locWinHeight = glGetUniformLocation(_pProg->oglHdl(), "window_height");
+
+    if (_locWinHeight == -1 || _locWinWidth == -1)
+    {
+        NXLogError("Failed to locate uniforms");
+        quit();
+        return;
+    }
+
+    glGenVertexArrays(1, &_vao);
+    glBindVertexArray(_vao);
+    glBindTexture(_pTex->oglType(), _pTex->oglHdl());
+
+    system()->window()->setDimensions(_pTex->desc().width, _pTex->desc().height);
+}
+
+void
+NXImageViewer::onWindowWillBeDestroyed()
+{
     glBindVertexArray(0);
     glDeleteVertexArrays(1, &_vao);
 
@@ -216,7 +244,6 @@ NXImageViewer::appTerm()
         NX_SAFE_DELETE(_pProg);
     }
 
-    _fileManager.clear();
 }
 
 }

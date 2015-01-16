@@ -19,6 +19,9 @@
 #include "nx/nxcore.h"
 #include "nx/sys/nxapp.h"
 #include "nx/sys/nxwindow.h"
+#include "nx/event/nxeventdata.h"
+#include "nx/event/nxeventmanager.h"
+#include "nx/sys/nxsysevents.h"
 
 namespace nx
 {
@@ -51,15 +54,27 @@ NXApp::init(const int argc, const char** argv)
 
     setAppOptions(argc, argv, _options);
 
+    _system.eventManager()->addListener(NXSysEvtWinDestroy::sEvtType, this);
+    _system.eventManager()->addListener(NXSysEvtWinCreated::sEvtType,this);
+    _system.eventManager()->addListener(NXSysEvtLowMem::sEvtType, this);
+
     if(!_system.init(argc, argv, &_options))
     {
         NXLogError("NXApp: Failed to init system");
         return false;
     }
 
-    if (!appInit(argc, argv))
+    _system.setInputManager(&_inputMan);
+
+    if (!onAppInit(argc, argv))
     {
-         NXLogError("NXApp: Failed to init app");
+        NXLogError("NXApp: Failed to init app");
+        return false;
+    }
+
+    if (!_system.createWindow(&_options))
+    {
+        NXLogError("NXApp: Failed to create window");
         return false;
     }
 
@@ -73,30 +88,63 @@ NXApp::quit()
     _system.setQuit();
 }
 
-void
-NXApp::run()
+int NXApp::run(const int argc,
+               const char **argv)
 {
+
+    if (!init(argc, argv))
+    {
+        return EXIT_FAILURE;
+    }
+
 
     while (!_system.quit())
     {
-         _system.tick();
+        _system.tick();
+
         if (!_system.paused())
         {
+            _system.beginFrame();
             appRun();
-            _system.window()->swapBuffers();
+            _system.endFrame();
         }
-
     }
+
+    term();
+
+    return EXIT_SUCCESS;
 }
 
 void
 NXApp::term()
 {
     NXLog("NXApp: Terminating...");
-    appTerm();
+
+    onAppWillTerm();
     _system.term();
 
     NXLog("NXApp: Term complete");
+}
+
+bool
+NXApp::handleEvent(const NXEventData* pEvtData)
+{
+    switch (pEvtData->type)
+    {
+    case kSystemEventWinCreated:
+        onWindowCreated();
+        return true;
+    case kSystemEventWinDestroy:
+        onWindowWillBeDestroyed();
+        return true;
+    case kSystemEventLowMem:
+        onSystemLowMemory();
+        return false;
+    default:
+        NXLogWarning("NXApp::hanldeEvent: Unknown event recieved: %x", pEvtData->type);
+        break;
+    }
+    return false;
 }
 
 }
