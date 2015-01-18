@@ -49,6 +49,18 @@ if(DEFINED ANDROID_SDK_DIR AND NOT DEFINED ENV{ANDROID_SDK_DIR})
     set(ENV{ANDROID_SDK_DIR} ${ANDROID_SDK_DIR})
 endif()
 
+if(NOT DEFINED ANDROID_NDK_DIR)
+    if(DEFINED ENV{ANDROID_NDK_DIR})
+        set(ANDROID_NDK_DIR $ENV{ANDROID_NDK_DIR})
+    else()
+        message(SEND_ERROR "Please define ANDROID_NDK_DIR via cmake or as an env variable")
+    endif()
+endif()
+
+if(DEFINED ANDROID_NDK_DIR AND NOT DEFINED ENV{ANDROID_NDK_DIR})
+    set(ENV{ANDROID_NDK_DIR} ${ANDROID_NDK_DIR})
+endif()
+
 set(ANDROID_ABI_ARM arm-linux-androideabi)
 set(ANDROID_ABI ${ANDROID_ABI_ARM})
 

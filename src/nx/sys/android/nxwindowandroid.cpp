@@ -61,7 +61,7 @@ NXWindowImp::dimensionsImp(nx_i32 &width,
                            nx_i32 &height)
 {
     eglQuerySurface(_display, _surface, EGL_WIDTH, &width);
-    eglQuerySurface(_display, _surface, EGL_WIDTH, &height);
+    eglQuerySurface(_display, _surface, EGL_HEIGHT, &height);
 }
 
 bool
@@ -80,17 +80,17 @@ NXWindowImp::createImp(struct NXWindowDesc& desc)
             EGL_NONE
     };
 
+    if(eglBindAPI(EGL_OPENGL_API) != EGL_TRUE)
+    {
+        NXLogError("NXWindowImp::createImp: Failed To Bind OpenGL API");
+        return false;
+    }
+
     _display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
 
     if (eglInitialize(_display, 0, 0) != EGL_TRUE)
     {
         NXLogError("NXWindowImp::createImp: Failed to initialize EGL");
-        return false;
-    }
-
-    if(eglBindAPI(EGL_OPENGL_API) != EGL_TRUE)
-    {
-        NXLogError("NXWindowImp::createImp: Failed To Bind OpenGL API");
         return false;
     }
     EGLint format, num_configs;
@@ -118,6 +118,7 @@ NXWindowImp::createImp(struct NXWindowDesc& desc)
         NXLogError("NXWindowImp::createImp: Failed to create EGL window/context");
         return false;
     }
+
 
     if (flextInit() != GL_TRUE)
     {

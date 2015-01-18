@@ -43,7 +43,8 @@ protected:
 
     void termImp(NXEventManager* pEvtManager);
 
-    void tickImp(NXInputManager* pInputManager);
+    bool tickImp(NXEventManager* pEvtManager
+                 NXInputManager* pInputManager);
 
     bool createWindowImp(const struct NXAppOptions* pOptions,
                          NXEventManager* pEvtManager);

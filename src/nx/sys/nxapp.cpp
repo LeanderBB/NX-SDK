@@ -85,24 +85,24 @@ NXApp::init(const int argc, const char** argv)
 void
 NXApp::quit()
 {
-    _system.setQuit();
+    _system.signalQuit();
 }
 
 int NXApp::run(const int argc,
                const char **argv)
 {
-
+    NXLogDebug("NXApp: starting...");
     if (!init(argc, argv))
     {
+        NXLogDebug("NXApp: exit (fail)");
         return EXIT_FAILURE;
     }
 
+    NXLogDebug("NXApp: running...");
 
-    while (!_system.quit())
+    while (!_system.shouldQuit())
     {
-        _system.tick();
-
-        if (!_system.paused())
+        if(_system.tick())
         {
             _system.beginFrame();
             appRun();
@@ -110,8 +110,10 @@ int NXApp::run(const int argc,
         }
     }
 
+    NXLogDebug("NXApp: exiting...");
     term();
 
+    NXLogDebug("NXApp: exit");
     return EXIT_SUCCESS;
 }
 

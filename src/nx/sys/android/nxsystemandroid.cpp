@@ -46,25 +46,73 @@ NXSystemImp::handleAppCmd(struct android_app* pApp,
     (void) p_system;
     switch(cmd)
     {
+    case APP_CMD_LOW_MEMORY:
+        p_system_imp->onLowMemory(p_system->eventManager());
+        break;
+    case APP_CMD_PAUSE:
+        //p_system->setPaused(true);
+        p_system_imp->_waitForEvents = true;
+        NXLogDebug("NXSystemImp: APP_CMD_PAUSE");
+        break;
+    case APP_CMD_RESUME:
+        //p_system->setPaused(false);
+        p_system_imp->_waitForEvents = false;
+        NXLogDebug("NXSystemImp: APP_CMD_RESUME");
+        break;
     case APP_CMD_GAINED_FOCUS:
+        NXLogDebug("NXSystemImp: APP_CMD_GAINED_FOCUS");
         p_system->setPaused(false);
+        p_system_imp->_waitForEvents = false;
         break;
     case APP_CMD_LOST_FOCUS:
+        NXLogDebug("NXSystemImp: APP_CMD_LOST_FOCUS");
         p_system->setPaused(true);
+        p_system_imp->_waitForEvents = true;
         break;
     case APP_CMD_INIT_WINDOW:
     {
+        NXLogDebug("NXSystemImp: APP_CMD_INIT_WINDOW");
         if (!p_system_imp->createWindowInCallback(p_system->eventManager()))
         {
-            p_system->quit();
+            p_system->signalQuit();
         }
         break;
     }
     case APP_CMD_TERM_WINDOW:
     {
+        NXLogDebug("NXSystemImp: APP_CMD_TERM_WINDOW");
         p_system_imp->destroyWindowInCallback(p_system->eventManager());
         break;
     }
+    case APP_CMD_CONFIG_CHANGED:
+    {
+        NXLogDebug("NXSystemImp: APP_CMD_CONFIG_CHANGED");
+        break;
+    }
+    case APP_CMD_DESTROY:
+    {
+        NXLogDebug("NXSystemImp: APP_CMD_DESTROY");
+        p_system->signalQuit();
+        break;
+    }
+    case APP_CMD_INPUT_CHANGED:
+        NXLogDebug("NXSystemImp: APP_CMD_INPUT_CHANGED");
+        break;
+    case APP_CMD_WINDOW_RESIZED:
+        NXLogDebug("NXSystemImp: APP_CMD_WINDOW_RESIZED");
+        break;
+    case APP_CMD_WINDOW_REDRAW_NEEDED:
+        NXLogDebug("NXSystemImp: APP_CMD_WINDOW_REDRAW_NEEDED");
+        break;
+    case APP_CMD_CONTENT_RECT_CHANGED:
+        NXLogDebug("NXSystemImp: APP_CMD_CONTENT_RECT_CHANGED");
+        break;
+    case APP_CMD_START:
+        NXLogDebug("NXSystemImp: APP_CMD_START");
+        break;
+    case APP_CMD_STOP:
+        NXLogDebug("NXSystemImp: APP_CMD_STOP");
+        break;
     default:
         break;
     }
@@ -85,7 +133,8 @@ nxHandleAppInput(struct android_app* pApp,
 
 NXSystemImp::NXSystemImp():
     _pWindow(nullptr),
-    _pOptions(nullptr)
+    _pOptions(nullptr),
+    _waitForEvents(false)
 {
 
 }
@@ -121,6 +170,7 @@ NXSystemImp::initImp(const int argc,
     g_pAndroidApp->onAppCmd = handleAppCmd;
     g_pAndroidApp->onInputEvent = nxHandleAppInput;
 
+    NXLogDebug("NXSystemImp::initImp Completed");
 
     return true;
 }
@@ -129,12 +179,14 @@ void
 NXSystemImp::termImp(NXEventManager* pEvtManager)
 {
     (void) pEvtManager;
-    // nothing to do
+    NXLogDebug("NXSystemImp::termImp Completed");
+    //ANativeActivity_finish(g_pAndroidApp->activity);
 }
 
 
-void
-NXSystemImp::tickImp(NXInputManager*)
+bool
+NXSystemImp::tickImp(NXEventManager* pEvtManager,
+                     NXInputManager*)
 {
     int ident;
     int events;
@@ -147,7 +199,31 @@ NXSystemImp::tickImp(NXInputManager*)
         if (source != NULL) {
             source->process(g_pAndroidApp, source);
         }
+
+        if(g_pAndroidApp->destroyRequested != 0)
+        {
+            NXLogDebug("NXSystemImp: Destroy requested");
+            return false;
+        }
     }
+
+
+
+    // check if window resolution changed
+    if (_pWindow)
+    {
+        nx_i32 w,h;
+        _pWindow->dimensionsImp(w,h);
+        if (w != _pWindow->width() || h != _pWindow->height())
+        {
+            _pWindow->_height = h;
+            _pWindow->_width = w;
+            NXSysEvtWinResize evt_resize(w,h);
+            pEvtManager->trigger(&evt_resize);
+        }
+    }
+
+    return true;
 }
 
 bool
@@ -174,6 +250,7 @@ NXSystemImp::createWindowInCallback( NXEventManager* pEvtManager)
             return false;
         }
 
+        NXLogDebug("NXSystemImp: Window created ");
         NXSysEvtWinCreated evt_created;
         pEvtManager->trigger(&evt_created);
     }
@@ -188,6 +265,7 @@ NXSystemImp::destroyWindowInCallback(NXEventManager *pEvtManager)
         NXSysEvtWinDestroy evt_destroy;
         pEvtManager->trigger(&evt_destroy);
         NX_SAFE_DELETE(_pWindow);
+        NXLogDebug("NXSystemImp: Window destroyed ");
     }
 }
 
@@ -207,6 +285,20 @@ NXSystemImp::windowImp()
     return _pWindow;
 }
 
+void
+NXSystemImp::onAppConfigChanged(NXEventManager*)
+{
+    NXLogDebug("NXSystemImp::onAppConfigChanged");
+}
+
+void
+NXSystemImp::onLowMemory(NXEventManager* pEvtManager)
+{
+    NXLogDebug("NXSystemImp::onLowMemory");
+    NXSysEvtLowMem evt_lowmem;
+    pEvtManager->trigger(&evt_lowmem);
+}
+
 }
 
 extern void nx_android_main(const int argc,
@@ -223,11 +315,12 @@ NX_EXPORT void android_main(struct android_app* state)
     pthread_setname_np(pthread_self(), "NX-MAIN");
 
 #if defined(NX_DEBUG)
-    nx::nxSleep(10);
+    //nx::nxSleep(10);
 #endif
-
+    nx::NXLogDebug("Android application entry");
     nx_android_main(0, NULL);
-    ANativeActivity_finish(state->activity);
+    nx::NXLogDebug("Android application exit");
+
 }
 
 }

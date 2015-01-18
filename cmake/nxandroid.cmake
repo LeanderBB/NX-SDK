@@ -49,7 +49,10 @@ function(NX_ANDROID_GEN_FILES TARGET APP_NAME)
 "    <application android:label=\"@string/app_name\" android:debuggable=\"true\" android:hasCode=\"false\">\n"
 "    <activity android:name=\"android.app.NativeActivity\"\n"
 "        android:label=\"@string/app_name\"\n"
-"        android:configChanges=\"orientation|keyboardHidden\">\n"
+"        android:theme=\"@android:style/Theme.Holo.Light.NoActionBar.Fullscreen\"\n"
+"        android:configChanges=\"orientation|keyboardHidden|keyboard\"\n"
+"        android:screenOrientation=\"landscape\"\n"
+"        android:launchMode=\"singleInstance\">\n"
 "        <meta-data android:name=\"android.app.lib_name\"\n"
 "             android:value=\"${TARGET}\" />\n"
 "            <intent-filter>\n"
@@ -96,11 +99,24 @@ function(NX_ANDROID_GEN_FILES TARGET APP_NAME)
         message(SEND_ERROR "Failed to generate android project")
     endif()
     
-    # add ndk_build & apk gen 
+    # run ndk-build
     add_custom_command(TARGET ${TARGET} POST_BUILD
-        COMMAND ant debug
+        COMMAND ${ANDROID_NDK_DIR}/ndk-build
+        WORKING_DIRECTORY ${_android_dir}
+        COMMENT "Running ndk-build for ${TARGET}"
+    )
+    # generate apk
+    add_custom_command(TARGET ${TARGET} POST_BUILD
+        COMMAND ${NX_ANT} debug
         WORKING_DIRECTORY ${_android_dir}
         COMMENT "Generating Android APK for ${TARGET}"
+    )
+
+    add_custom_target(${TARGET}-adb-install
+        COMMAND ${ANDROID_SDK_DIR}/platform-tools/adb install -r bin/${APP_NAME}-debug.apk
+        WORKING_DIRECTORY ${_android_dir}
+        DEPENDS ${TARGET}
+        COMMENT "Installing ${TARGET} onto android device"
     )
         
      

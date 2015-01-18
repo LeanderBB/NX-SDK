@@ -48,7 +48,8 @@ public:
 
     void term();
 
-    void tick();
+    /// @return True if we can run the main loop, false otherwise.
+    bool tick();
 
     NXEventManager* eventManager()
     {
@@ -60,7 +61,7 @@ public:
 
     NXWindow* window();
 
-    bool quit() const
+    bool shouldQuit() const
     {
         return _quit;
     }
@@ -75,11 +76,7 @@ public:
         _pause = b;
     }
 
-    void setQuit()
-    {
-        _quit = true;
-        _pause = true;
-    }
+    void signalQuit();
 
     void setInputManager(NXInputManager* pManager)
     {

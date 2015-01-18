@@ -76,10 +76,18 @@ NXSystem::window()
    return NXSystemImp::windowImp();
 }
 
-void
+bool
 NXSystem::tick()
 {
-    NXSystemImp::tickImp(_pInputMan);
+    return NXSystemImp::tickImp(&_evtMan,_pInputMan) && !paused();
+}
+
+void
+NXSystem::signalQuit()
+{
+    NXLogDebug("NXSystem: Singal Quit");
+    _quit = true;
+    _pause = true;
 }
 
 void

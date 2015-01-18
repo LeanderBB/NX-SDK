@@ -111,14 +111,17 @@ NXSystemImp::termImp(NXEventManager* pEvtManager)
 }
 
 
-void
-NXSystemImp::tickImp(NXInputManager* pInputManager)
+bool
+NXSystemImp::tickImp(NXEventManager*,
+                     NXInputManager* pInputManager)
 {
     SDL_PumpEvents();
     if (pInputManager)
     {
         NXProcessSDLInput(pInputManager);
     }
+
+    return true;
 }
 
 int
@@ -137,10 +140,10 @@ NXSystemImp::systemEventHandler(void *pUserData,
         {
         case SDL_WINDOWEVENT_RESIZED:
         {
-            NXSysEvtWinResize evt(pEvent->window.data1, pEvent->window.data2);
-            p_sys->eventManager()->trigger(&evt);
             p_sys->window()->_height = pEvent->window.data2;
             p_sys->window()->_width = pEvent->window.data1;
+            NXSysEvtWinResize evt(pEvent->window.data1, pEvent->window.data2);
+            p_sys->eventManager()->trigger(&evt);
             return 0;
         }
         case SDL_WINDOWEVENT_MINIMIZED:

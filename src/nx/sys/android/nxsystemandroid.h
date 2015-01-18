@@ -45,7 +45,8 @@ protected:
 
     void termImp(NXEventManager* pEvtManager);
 
-    void tickImp(NXInputManager* pInputManager);
+    bool tickImp(NXEventManager* pEvtManager,
+                 NXInputManager* pInputManager);
 
     bool createWindowImp(const struct NXAppOptions* pOptions,
                          NXEventManager* pEvtManager);
@@ -60,9 +61,15 @@ private:
     static void handleAppCmd(struct android_app* pApp,
                              int32_t cmd);
 
+    void onAppConfigChanged(NXEventManager* pEvtManager);
+
+    void onLowMemory(NXEventManager* pEvtManager);
+
+
 private:
     NXWindow* _pWindow;
     const NXAppOptions* _pOptions;
+    bool _waitForEvents;
 };
 
 }
