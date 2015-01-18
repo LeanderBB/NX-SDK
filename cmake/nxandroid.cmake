@@ -112,12 +112,25 @@ function(NX_ANDROID_GEN_FILES TARGET APP_NAME)
         COMMENT "Generating Android APK for ${TARGET}"
     )
 
+    add_custom_target(${TARGET}-ndk-build
+        COMMAND ${ANDROID_NDK_DIR}/ndk-build
+        WORKING_DIRECTORY ${_android_dir}
+        DEPENDS ${TARGET}
+        COMMENT "Running ndk-build for ${TARGET}"
+    )
+
+    add_custom_target(${TARGET}-apk-package
+        COMMAND ${NX_ANT} debug
+        WORKING_DIRECTORY ${_android_dir}
+        DEPENDS ${TARGET} ${TARGET}-ndk-build
+        COMMENT "Generating Android APK for ${TARGET}"
+    )
+
     add_custom_target(${TARGET}-adb-install
         COMMAND ${ANDROID_SDK_DIR}/platform-tools/adb install -r bin/${APP_NAME}-debug.apk
         WORKING_DIRECTORY ${_android_dir}
-        DEPENDS ${TARGET}
+        DEPENDS ${TARGET} ${TARGET}-ndk-build ${TARGET}-apk-package
         COMMENT "Installing ${TARGET} onto android device"
     )
-        
      
 endfunction()

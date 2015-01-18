@@ -17,10 +17,10 @@
 // along with NX. If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include "nx/nxcore.h"
+#include <nx/nxcore.h>
 #include <stdarg.h>
 
-#if defined(ANDROID)
+#if defined(NX_SYSTEM_ANDROID)
 #include <android/log.h>
 #define NX_LOG_USE_ANDROID
 #else
@@ -50,7 +50,7 @@ logInternal(const char* tag,
 #elif defined(NX_LOG_USE_ANDROID)
 
 #define NX_LOG_PREFIX_ERROR ANDROID_LOG_ERROR
-#define NX_LOG_PREFIX_INFO ANDROID_LOG_DEFAULT
+#define NX_LOG_PREFIX_INFO ANDROID_LOG_INFO
 #define NX_LOG_PREFIX_WARN ANDROID_LOG_WARN
 #define NX_LOG_PREFIX_DEBUG ANDROID_LOG_DEBUG
 #define NX_LOG_PREFIX_FATAL ANDROID_LOG_FATAL
