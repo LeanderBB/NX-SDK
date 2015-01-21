@@ -70,6 +70,11 @@ int flextInit(void)
         add_extension((const char*)glGetStringi(GL_EXTENSIONS, i));
     }
 
+    if (!FLEXT_ARB_direct_state_access) {
+        fprintf(stderr, "Error: OpenGL extension GL_ARB_direct_state_access not supported.\n");
+        fprintf(stderr, "       Try updating your graphics driver.\n");
+        return GL_FALSE;
+    }
 
     return GL_TRUE;
 }
@@ -1015,10 +1020,10 @@ void flextLoadOpenGLFunctions(void)
 
 /* ----------------------- Extension flag definitions ---------------------- */
 int FLEXT_ARB_bindless_texture = GL_FALSE;
-int FLEXT_ARB_direct_state_access = GL_FALSE;
 int FLEXT_EXT_direct_state_access = GL_FALSE;
 int FLEXT_KHR_texture_compression_astc_ldr = GL_FALSE;
 int FLEXT_KHR_texture_compression_astc_hdr = GL_FALSE;
+int FLEXT_ARB_direct_state_access = GL_FALSE;
 
 /* ---------------------- Function pointer definitions --------------------- */
 
@@ -1933,9 +1938,6 @@ static void add_extension(const char* extension)
     if (strcmp("GL_ARB_bindless_texture", extension) == 0) {
         FLEXT_ARB_bindless_texture = GL_TRUE;
     }
-    if (strcmp("GL_ARB_direct_state_access", extension) == 0) {
-        FLEXT_ARB_direct_state_access = GL_TRUE;
-    }
     if (strcmp("GL_EXT_direct_state_access", extension) == 0) {
         FLEXT_EXT_direct_state_access = GL_TRUE;
     }
@@ -1944,6 +1946,9 @@ static void add_extension(const char* extension)
     }
     if (strcmp("GL_KHR_texture_compression_astc_hdr", extension) == 0) {
         FLEXT_KHR_texture_compression_astc_hdr = GL_TRUE;
+    }
+    if (strcmp("GL_ARB_direct_state_access", extension) == 0) {
+        FLEXT_ARB_direct_state_access = GL_TRUE;
     }
 }
 

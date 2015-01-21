@@ -84,6 +84,8 @@ protected:
     const nx_u32 _oglType;
 };
 
+
+/*
 class NXOGLTextureBinder
 {
 public:
@@ -100,7 +102,7 @@ private:
     nx_u32 _prevIdx;
     nx_u32 _prevHdl;
 };
-
+*/
 
 }
 

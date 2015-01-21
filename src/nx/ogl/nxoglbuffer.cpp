@@ -89,7 +89,7 @@ NXOGLBuffer::NXOGLBuffer(const NXGPUBufferDesc& desc):
     _oglType(NXOGLBufferType(desc.type)),
     _mapped(false)
 {
-    glGenBuffers(1, &_oglhdl);
+    glCreateBuffers(1, &_oglhdl);
 }
 
 void
@@ -122,9 +122,7 @@ NXOGLBuffer::allocateStorage(const void* ptr)
         glflags |= GL_MAP_WRITE_BIT;
     }
 
-
-    glBindBuffer(_oglType, oglHdl());
-    glBufferStorage(_oglType, _desc.size, ptr, glflags);
+    glNamedBufferStorage(oglHdl(), _desc.size, ptr, glflags);
 }
 
 }

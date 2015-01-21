@@ -111,7 +111,7 @@ NXImgFileLoad(const char* path)
         stbi_image_free(p_data);
         NXFree(p_result);
         NXLogError("Could not find texture description for %x", p_result->format);
-        return false;
+        return nullptr;
     }
 
     const size_t row_stride = NXGPUTextureRowStride(desc, width);

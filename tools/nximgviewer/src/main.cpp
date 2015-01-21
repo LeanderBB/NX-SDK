@@ -74,12 +74,12 @@ public:
 
 protected:
 
-    bool appInit(const int argc,
-                 const char**argv);
+    bool onAppInit(const int argc,
+                 const char**argv) NX_CPP_OVERRIDE;
 
-    void appRun();
+    void appRun() NX_CPP_OVERRIDE;
 
-    void appTerm();
+    void onAppWillTerm() NX_CPP_OVERRIDE;
 
     void onWindowCreated();
 
@@ -114,8 +114,8 @@ NXImageViewer::~NXImageViewer()
 }
 
 bool
-NXImageViewer::appInit(const int argc,
-                       const char**argv)
+NXImageViewer::onAppInit(const int argc,
+                        const char**argv)
 {
     if (argc < 2)
     {
@@ -156,7 +156,7 @@ NXImageViewer::appRun()
 }
 
 void
-NXImageViewer::appTerm()
+NXImageViewer::onAppWillTerm()
 {
     if (_pFile)
     {

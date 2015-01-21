@@ -132,7 +132,7 @@ NXSystemImp::systemEventHandler(void *pUserData,
     switch(pEvent->type)
     {
     case SDL_QUIT:
-        p_sys->setQuit();
+        p_sys->signalQuit();
         return 0;
     case SDL_WINDOWEVENT:
     {

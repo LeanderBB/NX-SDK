@@ -31,17 +31,19 @@ static __thread nx_u32 sActiveIdx = 0;
 static nx_u32 sActiveTexureList[NX_MAX_ACTIVE_TEX_UNITS][kGPUTextureTypeTotal] = {{0}};
 static nx_u32 sActiveIdx = 0;
 #endif
-static const GLenum sGLTextureTypes[] =
+
+/*static const GLenum sGLTextureTypes[] =
 {
     GL_TEXTURE_2D,
     GL_TEXTURE_3D,
     GL_TEXTURE_2D_ARRAY,
     GL_TEXTURE_CUBE_MAP
 };
+*/
 
 
 
-
+/*
 
 static void
 NXBindTextureSafe(const nx_u32 hdl,
@@ -59,7 +61,8 @@ NXBindTextureSafe(const nx_u32 hdl,
         sActiveTexureList[idx][type] = hdl;
     }
 }
-
+*/
+/*
 
 static void
 NXUnbindTextureSafe(const nx_u32 hdl,
@@ -79,7 +82,7 @@ NXUnbindTextureSafe(const nx_u32 hdl,
         sActiveIdx = idx;
     }
 }
-
+*/
 static void
 NXBindTexture(const nx_u32 hdl,
               const nx_u32 type,
@@ -88,9 +91,11 @@ NXBindTexture(const nx_u32 hdl,
     NX_ASSERT(type < kGPUTextureTypeTotal);
     NX_ASSERT(idx < NX_MAX_ACTIVE_TEX_UNITS);
 
-    glActiveTexture(idx);
+    glBindTextureUnit(idx, hdl);
+
+    //glActiveTexture(idx);
     sActiveIdx = idx;
-    glBindTexture(sGLTextureTypes[type], hdl);
+    //glBindTexture(sGLTextureTypes[type], hdl);
     sActiveTexureList[idx][type] = hdl;
 }
 
@@ -302,7 +307,7 @@ NXOGLTexture::upload(const void* pData,
                      const int unpackAlignment)
 {
 
-    NXOGLTextureBinder binder(this);
+    //NXOGLTextureBinder binder(this);
 
     GLint previousUnpack;
     glGetIntegerv(GL_UNPACK_ALIGNMENT, &previousUnpack);
@@ -320,26 +325,26 @@ NXOGLTexture::upload(const void* pData,
         case GL_TEXTURE_2D:
             if (p_info->compressed)
             {
-                glCompressedTexSubImage2D(_oglType, mipLvl, 0, 0, width, height,
-                                          p_info->internal, size, pData);
+                glCompressedTextureSubImage2D(oglHdl(), mipLvl, 0, 0, width, height,
+                                              p_info->internal, size, pData);
             }
             else
             {
-                glTexSubImage2D(_oglType, mipLvl, 0, 0, width, height,
-                                p_info->format,p_info->dataType, pData);
+                glTextureSubImage2D(oglHdl(), mipLvl, 0, 0, width, height,
+                                    p_info->format,p_info->dataType, pData);
             }
             break;
         case GL_TEXTURE_3D:
         case GL_TEXTURE_2D_ARRAY:
             if (p_info->compressed)
             {
-                glCompressedTexSubImage3D(_oglType, mipLvl, 0, 0, 0, width, height,
-                                          depth, p_info->internal, size, pData);
+                glCompressedTextureSubImage3D(oglHdl(), mipLvl, 0, 0, 0, width, height,
+                                              depth, p_info->internal, size, pData);
             }
             else
             {
-                glTexSubImage3D(_oglType, mipLvl, 0, 0, 0, width, height, depth,
-                                p_info->format,p_info->dataType, pData);
+                glTextureSubImage3D(oglHdl(), mipLvl, 0, 0, 0, width, height, depth,
+                                    p_info->format,p_info->dataType, pData);
             }
             break;
         case GL_TEXTURE_CUBE_MAP:
@@ -354,9 +359,9 @@ NXOGLTexture::upload(const void* pData,
             size_t face_size = p_tex_info->nBytesPerPixel * width + height;
             for (int i = 0; i < 6; ++i)
             {
-                glTexSubImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, mipLvl, 0, 0, width,
-                                height, p_info->format, p_info->dataType,
-                                (const char*)pData + face_size);
+                glTextureSubImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, mipLvl, 0, 0, width,
+                                    height, p_info->format, p_info->dataType,
+                                    (const char*)pData + face_size);
             }
         }
             break;
@@ -389,20 +394,20 @@ NXOGLTexture::allocateStorage()
         return false;
     }
 
-    glGenTextures(1, &_oglhdl);
+    glCreateTextures(_oglType, 1, &_oglhdl);
 
-    NXOGLTextureBinder binder(this);
+    //NXOGLTextureBinder binder(this);
 
     switch(_oglType)
     {
     case GL_TEXTURE_CUBE_MAP:
     case GL_TEXTURE_2D:
-        glTexStorage2D(_oglType, _desc.nMipMap, p_info->internal, _desc.width,
+        glTextureStorage2D(oglHdl(), _desc.nMipMap, p_info->internal, _desc.width,
                        _desc.height);
         break;
     case GL_TEXTURE_3D:
     case GL_TEXTURE_2D_ARRAY:
-        glTexStorage3D(_oglType, _desc.nMipMap, p_info->internal, _desc.width,
+        glTextureStorage3D(oglHdl(), _desc.nMipMap, p_info->internal, _desc.width,
                        _desc.height, _oglType == GL_TEXTURE_3D ? _desc.depth : _desc.nArray);
         break;
     default:
@@ -413,30 +418,32 @@ NXOGLTexture::allocateStorage()
     // set filter params
     if (_desc.nMipMap > 1)
     {
-        glTexParameteri(_oglType, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
+        glTextureParameteri(oglHdl(), GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
     }
     else
     {
-        glTexParameteri(_oglType, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTextureParameteri(oglHdl(), GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     }
 
     // default magnification filter
-    glTexParameteri(_oglType, GL_TEXTURE_MAG_FILTER , GL_LINEAR);
+    glTextureParameteri(oglHdl(), GL_TEXTURE_MAG_FILTER , GL_LINEAR);
 
 
     // set default wrap mode
-    glTexParameteri(_oglType, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(_oglType, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    glTexParameteri(_oglType, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
+    glTextureParameteri(oglHdl(), GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTextureParameteri(oglHdl(), GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    glTextureParameteri(oglHdl(), GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
     return true;
 }
 
+/*
 NXOGLTextureBinder::NXOGLTextureBinder(const NXOGLTexture* pTex):
     _pTex(pTex),
     _prevIdx(sActiveIdx),
     _prevHdl(0)
 
 {
+    NX_ASSERT(false);
     NX_ASSERT(_pTex->desc().type < kGPUTextureTypeTotal);
     NX_ASSERT(sActiveIdx < NX_MAX_ACTIVE_TEX_UNITS);
 
@@ -451,6 +458,7 @@ NXOGLTextureBinder::NXOGLTextureBinder(const NXOGLTexture* pTex,
     _prevHdl(0)
 
 {
+    NX_ASSERT(false);
     NX_ASSERT(_pTex->desc().type < kGPUTextureTypeTotal);
     NX_ASSERT(idx < NX_MAX_ACTIVE_TEX_UNITS);
 
@@ -460,8 +468,9 @@ NXOGLTextureBinder::NXOGLTextureBinder(const NXOGLTexture* pTex,
 
 NXOGLTextureBinder::~NXOGLTextureBinder()
 {
-    NXUnbindTextureSafe(_prevHdl, _pTex->desc().type, _prevIdx);
+    NX_ASSERT(false);
+   NXUnbindTextureSafe(_prevHdl, _pTex->desc().type, _prevIdx);
 }
 
-
+*/
 }
