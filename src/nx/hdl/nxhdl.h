@@ -20,7 +20,7 @@
 #define __NX_HDL_H__
 
 #define NX_HDL_INVALID (nx_u32(0))
-
+#define NX_HDL_TYPE_MASK (0x1F)
 namespace nx
 {
 
@@ -48,6 +48,12 @@ public:
         return type << 27 | counter << 12 | idx;
     }
 
+
+    operator bool () const
+    {
+        return valid();
+    }
+
     void reset()
     {
         idx = 0;
@@ -57,7 +63,7 @@ public:
 
     bool valid() const
     {
-        return *this != NX_HDL_INVALID;
+        return (nx_u32)(*this) != NX_HDL_INVALID;
     }
 
     unsigned idx: 12;

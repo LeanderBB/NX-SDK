@@ -20,7 +20,6 @@
 
 #if defined(NX_SYSTEM_SDL2)
 #include "nx/sys/sdl/nxwindowsdl.h"
-#include "nx/sys/gl/core44/flextGL.h"
 #include "nx/sys/nxwindow.h"
 namespace nx
 {
@@ -154,16 +153,6 @@ NXWindowImp::createImp(struct NXWindowDesc& desc)
         {
             NXLogError("NXWindow::create Failed to create ctx: %s", SDL_GetError());
             return false;
-        }
-
-        // init opengl
-
-        int result = flextInit();
-        if (result != GL_TRUE)
-        {
-            NXLogError("NXWindow::create Failed to load all required OpenGL function. \
-                       Please make sure you have an OpenGL 4.4 capable device");
-                       return false;
         }
 
     }

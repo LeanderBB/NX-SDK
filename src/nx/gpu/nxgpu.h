@@ -19,6 +19,9 @@
 #ifndef __NX_GPU_H__
 #define __NX_GPU_H__
 
+
+#define NX_GPU_DEFAULT_MAX_SHADER_INPUT 16
+
 enum GPUShaderType
 {
     kGPUShaderTypeVertex,
@@ -38,5 +41,73 @@ enum GPUDrawMode
     kGPUDrawModeLines,
     kGPUDrawModePoints
 };
+
+enum GPUResourceType
+{
+    kGPUResourceTypeUnknown = 0,
+    kGPUResourceTypeProgram,
+    kGPUResourceTypeBuffer,
+    kGPUResourceTypeTexture,
+    kGPUResourceTypeShaderInput,
+    kGPUResourceTypeRT
+};
+
+enum GPUBufferLayout
+{
+    kGPUBufferLayout3V3N2T,
+    kGPUBufferLayout3V3N,
+    kGPUBufferLayout3B3T,
+    kGPUBufferLayout3V3N2T3C,
+    kGPUBufferLayout3FLT,
+    kGPUBufferLayout2FLT,
+    kGPUBufferLayout1FLT,
+    kGPUBufferLayout1UI,
+    kGPUBufferLayout1US
+};
+
+enum GPUDataType
+{
+    kGPUDataTypeUnknown = 0,
+    kGPUDataTypeFloat,
+    kGPUDataTypeUInt,
+    kGPUDataTypeInt,
+    kGPUDataTypeUShort,
+    kGPUDataTypeShort,
+    kGPUDataTypeUByte,
+    kGPUDataTypeByte
+};
+
+enum GPUShaderInputIdx
+{
+    kGPUShaderInputIdxVertices = 0,
+    kGPUShaderInputIdxNormals = 1,
+    kGPUShaderInputIdxTexCoord0 = 2,
+    kGPUShaderInputIdxTexCoord1 = 3,
+    kGPUShaderInputIdxBinormal = 4,
+    kGPUShaderInputIdxTangent = 5,
+    kGPUShaderInputIdxColor = 6,
+    kGPUShaderInputIdxOther = 7,
+    kGPUShaderInputIdxMax = 16
+};
+
+
+enum GPUBufferType
+{
+    kGPUBufferTypeData,
+    kGPUBufferTypeIndex,
+    kGPUBufferTypeUniform,
+    kGPUBufferTypeFeedback,
+    kGPUBufferTypeCompute
+};
+
+enum GPUBufferMode
+{
+    kGPUBufferModePresistentBit,
+    kGPUBufferModeCoherentBit,
+    kGPUBufferModeDynamicStorageBit,
+    kGPUBufferModeWriteBit,
+    kGPUBufferModeReadBit
+};
+
 
 #endif

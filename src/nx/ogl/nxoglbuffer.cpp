@@ -43,21 +43,21 @@ NXOGLBufferType(const GPUBufferType type)
     }
 }
 
-NXOGLBuffer*
+NXTLSharedPtr<NXOGLBuffer>
 NXOGLBuffer::create(const NXGPUBufferDesc& desc)
 {
-    NXOGLBuffer* p_buffer = new NXOGLBuffer(desc);
-    p_buffer->allocateStorage();
-    return p_buffer;
+    NXOGLBufferPtr_t buffer = nxMakeTLShared<NXOGLBuffer>(desc);
+    buffer->allocateStorage();
+    return buffer;
 }
 
-NXOGLBuffer*
+NXTLSharedPtr<NXOGLBuffer>
 NXOGLBuffer::create(const NXGPUBufferDesc& desc,
                     const void* pData)
 {
-    NXOGLBuffer* p_buffer = new NXOGLBuffer(desc);
-    p_buffer->allocateStorage(pData);
-    return p_buffer;
+    NXOGLBufferPtr_t buffer = nxMakeTLShared<NXOGLBuffer>(desc);
+    buffer->allocateStorage(pData);
+    return buffer;
 }
 
 NXOGLBuffer::~NXOGLBuffer()

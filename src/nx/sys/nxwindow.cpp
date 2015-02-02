@@ -18,7 +18,6 @@
 //
 #include "nx/nxcore.h"
 #include "nx/sys/nxwindow.h"
-#include "nx/sys/gl/core44/flextGL.h"
 namespace nx
 {
 
@@ -61,68 +60,6 @@ NXWindow::dimensions(nx_i32 &width,
     height = _height;
 }
 
-
-
-static void APIENTRY NXWindowGLDbgCallback(GLenum source,
-                                           GLenum type,
-                                           GLuint id,
-                                           GLenum severity,
-                                           GLsizei length,
-                                           const GLchar *message,
-                                           const void *userParam)
-{
-    (void) source;
-    (void) id;
-    (void) length;
-    (void) userParam;
-    const char* chr_severity;
-    const char* error_type;
-    switch(severity)
-    {
-    case GL_DEBUG_SEVERITY_HIGH:
-        chr_severity = "high";
-        break;
-    case GL_DEBUG_SEVERITY_MEDIUM:
-        chr_severity = "high";
-        break;
-    case GL_DEBUG_SEVERITY_LOW:
-        chr_severity = "high";
-        break;
-    case GL_DEBUG_SEVERITY_NOTIFICATION:
-        chr_severity = "notification";
-        break;
-    default:
-        chr_severity = "unknown";
-    }
-
-    switch(type)
-    {
-    case GL_DEBUG_TYPE_ERROR:
-        error_type = "error";
-        NXLogError("GLDBG(%s): %s (Severity: %s)", error_type, message, chr_severity);
-        break;
-    case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
-        error_type = "deperecated behaviour";
-        NXLogError("GLDBG(%s): %s (Severity: %s)", error_type, message, chr_severity);
-        break;
-    case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
-        error_type = "undefined behaviour";
-        NXLogError("GLDBG(%s): %s (Severity: %s)", error_type, message, chr_severity);
-        break;
-    case GL_DEBUG_TYPE_PORTABILITY:
-        error_type = "portability";
-        break;
-    case GL_DEBUG_TYPE_PERFORMANCE:
-        error_type = "perforance";
-        NXLogWarning("GLDBG(%s): %s (Severity: %s)", error_type, message, chr_severity);
-        break;
-    default:
-        error_type = "Unknown";
-        NXLogError("GLDBG(%s): %s (Severity: %s)", error_type, message, chr_severity);
-        break;
-    }
-}
-
 bool
 NXWindow::create(const bool depth,
                  const bool stencil,
@@ -143,13 +80,6 @@ NXWindow::create(const bool depth,
     {
         NXWindowImp::dimensionsImp(_width, _height);
         NXLogDebug("NXWindow::created window with size %dx%d", _width, _height);
-
-        if (dbgctx)
-        {
-            glEnable(GL_DEBUG_OUTPUT);
-            glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-            glDebugMessageCallback(NXWindowGLDbgCallback, nullptr);
-        }
 
         return true;
     }

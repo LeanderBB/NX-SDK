@@ -19,46 +19,57 @@
 #ifndef __NX_GPUBUFFER_H__
 #define __NX_GPUBUFFER_H__
 
+#include "nx/hdl/nxhdl.h"
+#include "nx/util/nxtlsharedptr.h"
+#include "nx/gpu/nxgpu.h"
+
 namespace nx
 {
-
-enum GPUBufferLayout
-{
-    kGPUBufferLayout3V3N2T,
-    kGPUBufferLayout3V3N,
-    kGPUBufferLayout3B3T,
-    kGPUBufferLayout3V3N2T3C,
-    kGPUBufferLayout3FLT,
-    kGPUBufferLayout2FLT,
-    kGPUBufferLayout1UI,
-    kGPUBufferLayout1US
-};
-
-enum GPUBufferType
-{
-    kGPUBufferTypeData,
-    kGPUBufferTypeIndex,
-    kGPUBufferTypeUniform,
-    kGPUBufferTypeFeedback,
-    kGPUBufferTypeCompute
-};
-
-enum GPUBufferMode
-{
-    kGPUBufferModePresistentBit,
-    kGPUBufferModeCoherentBit,
-    kGPUBufferModeDynamicStorageBit,
-    kGPUBufferModeWriteBit,
-    kGPUBufferModeReadBit
-};
-
 
 struct NXGPUBufferDesc
 {
     GPUBufferType type = kGPUBufferTypeData;
     nx_u32 mode = 0;
     nx_u32 size = 0;
+    nx_u32 flags = 0;
 };
+
+struct NXGPUBufferHdl
+{
+    NXHdl gpuhdl;
+    nx_u32 offset = 0;
+};
+
+class NXGPUBufferManagerInterface;
+class NXGPUBuffer
+{
+public:
+
+    NXGPUBuffer(const NXGPUBufferDesc& desc,
+                const NXGPUBufferHdl hdl,
+                NXGPUBufferManagerInterface& manager);
+
+
+    ~NXGPUBuffer();
+
+    const NXGPUBufferDesc& desc() const;
+
+    nx_u32 size() const;
+
+    GPUBufferType type() const;
+
+    nx_u32 mode() const;
+
+    const NXGPUBufferHdl& hdl() const;
+
+protected:
+    NXGPUBufferDesc _desc;
+    NXGPUBufferHdl _hdl;
+    NXGPUBufferManagerInterface& _manager;
+};
+
+typedef NXTLSharedPtr<NXGPUBuffer> NXGPUBufferPtr_t;
+typedef std::vector<NXGPUBufferHdl> NXGPUBufferHdlVec_t;
 
 }
 #endif

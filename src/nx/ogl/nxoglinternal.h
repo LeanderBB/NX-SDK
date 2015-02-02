@@ -20,8 +20,7 @@
 #define __NX_OGLINTERNAL_H__
 
 #include "nx/nxcore.h"
-
-#include "nx/sys/gl/core44/flextGL.h"
+#include "nx/ogl/core44/flextGL.h"
 
 
 namespace nx

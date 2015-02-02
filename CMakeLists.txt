@@ -42,7 +42,7 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tests/input)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tests/glinfo)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tests/io)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tests/args)
-
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tests/tlsharedptr)
 endif()
 
 # install cmake files

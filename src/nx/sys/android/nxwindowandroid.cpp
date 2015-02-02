@@ -19,7 +19,6 @@
 #include "nx/nxcore.h"
 #if defined(NX_SYSTEM_ANDROID)
 #include "nx/sys/android/nxwindowandroid.h"
-#include "nx/sys/gl/core44/flextGL.h"
 #include "nx/sys/nxwindow.h"
 #include "nx/sys/android/android_native_app_glue.h"
 
@@ -117,14 +116,6 @@ NXWindowImp::createImp(struct NXWindowDesc& desc)
     {
         NXLogError("NXWindowImp::createImp: Failed to create EGL window/context");
         return false;
-    }
-
-
-    if (flextInit() != GL_TRUE)
-    {
-        NXLogError("NXWindow::create Failed to load all required OpenGL function. \
-                   Please make sure you have an OpenGL 4.4 capable device");
-                   return false;
     }
 
     return true;

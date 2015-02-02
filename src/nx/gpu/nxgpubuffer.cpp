@@ -18,8 +18,55 @@
 //
 #include "nx/nxcore.h"
 #include "nx/gpu/nxgpubuffer.h"
+#include "nx/gpu/nxgpubuffermanagerinterface.h"
 
 namespace nx
 {
+
+NXGPUBuffer::NXGPUBuffer(const NXGPUBufferDesc& desc,
+            const NXGPUBufferHdl hdl,
+            NXGPUBufferManagerInterface& manager):
+    _desc(desc),
+    _hdl(hdl),
+    _manager(manager)
+{
+
+}
+
+NXGPUBuffer::~NXGPUBuffer()
+{
+    _manager.destroy(this);
+}
+
+const NXGPUBufferDesc&
+NXGPUBuffer::desc() const
+{
+    return _desc;
+}
+
+nx_u32
+NXGPUBuffer::size() const
+{
+    return _desc.size;
+}
+
+GPUBufferType
+NXGPUBuffer::type() const
+{
+    return _desc.type;
+}
+
+nx_u32
+NXGPUBuffer::mode() const
+{
+    return _desc.mode;
+}
+
+const NXGPUBufferHdl&
+NXGPUBuffer::hdl() const
+{
+    return _hdl;
+}
+
 
 }

@@ -366,4 +366,15 @@ NXPath::fileSize(size_t& out, const char* path)
     return result;
 }
 
+const char*
+NXPath::fileExtension(const char* path)
+{
+    const char* res = strrchr(path, '.');
+    if (res)
+    {
+        res = res + 1;
+    }
+    return res;
+}
+
 }

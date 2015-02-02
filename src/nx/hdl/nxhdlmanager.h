@@ -25,14 +25,15 @@
 namespace nx
 {
 
-template<class T, nx_u32 MAX_ENTRIES = 2048 >
+template<typename T, nx_u32 MAX_ENTRIES = 2048>
 class NXHandleManager
 {
 public:
 
     typedef T value_type;
-    typedef T* value_ptr;
-    typedef T& value_ref;
+    typedef value_type* pointer;
+    typedef value_type& reference;
+    typedef const value_type& const_reference;
 
     typedef NXHandleManager< T,MAX_ENTRIES> class_type;
 
@@ -45,26 +46,18 @@ public:
         kMaxEntries = MAX_ENTRIES
     };
 
-    NXHandleManager():
+    NXHandleManager(const char* name = "HandleManager"):
         _entries(),
         _nActive(0),
-        _firstFreeIdx(0)
+        _firstFreeIdx(0),
+        _name(name)
     {
         reset();
     }
 
     ~NXHandleManager()
     {
-        int i;
-        value_ptr ptr = nullptr;
-        for ( i = 0; i < kMaxEntries - 1; ++i)
-        {
-            if (_entries[i].active)
-            {
-                ptr = reinterpret_cast<value_ptr>(&_entries[i].entry[0]);
-                ptr->~value_type();
-            }
-        }
+
     }
 
     void reset()
@@ -73,28 +66,29 @@ public:
         _firstFreeIdx = 0;
 
         int i;
-        value_ptr ptr = nullptr;
-        for ( i = 0; i < kMaxEntries - 1; ++i)
+        for ( i = 0; i < kMaxEntries; ++i)
         {
-            _entries[i].nextFreeIdx = i + 1;
-            if (_entries[i].active)
+            NXHandleEntry& entry = _entries[i];
+            entry.nextFreeIdx = i + 1;
+            if (entry.active)
             {
-                ptr = reinterpret_cast<value_ptr>(&_entries[i].entry[0]);
-                ptr->~value_type();
+                (&entry.value)->~T();
+                new (&entry.value) T();
             }
-            _entries[i].active = 0;
+            entry.active = 0;
         }
-        _entries[i].eol = 1;
+        _entries[i-1].eol = 1;
     }
 
     NXHdl add(const nx_u32 magic,
-              value_ptr& entry)
+              const_reference entry)
     {
         NX_ASSERT(magic > 0 && magic <= 31);
         // check if capacity has been exhausted
         if (_nActive >= kMaxEntries - 1)
         {
-            NXLogError("HandleManager::add : Exhausted all available handles");
+            NXLogError("HandleManager::add (%s) : Exhausted all available handles",
+                       _name.c_str());
             return NXHdl();
         }
 
@@ -117,22 +111,20 @@ public:
             hdle.counter = 1;
         }
         hdle.active = 1;
-        entry = new (hdle.entry) value_type();
-
         ++_nActive;
 
+        hdle.value = entry;
         return NXHdl(new_idx, hdle.counter, magic);
     }
 
     bool update(const NXHdl hdl,
-                const value_ref entry)
+                const_reference entry)
     {
         bool result = false;
         NXHandleEntry& hdle = _entries[hdl.idx];
         if (hdle.counter == hdl.counter && hdle.active)
         {
-            value_ptr ptr = reinterpret_cast<value_ptr>(&hdle.entry[0]);
-            *ptr = entry;
+            hdle.value = entry;
             result = true;
         }
         return result;
@@ -146,8 +138,6 @@ public:
         {
             hdle.nextFreeIdx = _firstFreeIdx;
             hdle.active = 0;
-            value_ptr ptr = reinterpret_cast<value_ptr>(&hdle.entry[0]);
-            ptr->~value_type();
             _firstFreeIdx = hdl.idx;
             --_nActive;
             result = true;
@@ -156,22 +146,21 @@ public:
     }
 
     bool get(const NXHdl hdl,
-             value_ptr& entry) const
+             reference entry) const
     {
         const NXHandleEntry& hdle = _entries[hdl.idx];
         if (hdle.counter == hdl.counter && hdle.active)
         {
-            entry = reinterpret_cast<value_ptr>(&hdle.entry[0]);
+            entry = hdle.value;
             return true;
         }
         return false;
     }
 
-    value_ptr get(const NXHdl hdl) const
+    bool contains(const NXHdl hdl) const
     {
-        value_ptr p = nullptr;
-        get(hdl, p);
-        return p;
+        const NXHandleEntry& hdle = _entries[hdl.idx];
+        return (hdle.counter == hdl.counter && hdle.active);
     }
 
     nx_u32 count() const
@@ -192,37 +181,37 @@ protected:
     {
     public:
         NXHandleEntry():
+            value(),
             nextFreeIdx(0),
             counter(1),
             active(0),
-            eol(0),
-            entry()
+            eol(0)
         {
 
         }
 
         explicit NXHandleEntry(const nx_u32 nxtFreeIdx):
+            value(),
             nextFreeIdx(nxtFreeIdx),
             counter(1),
             active(0),
-            eol(0),
-            entry()
+            eol(0)
         {
 
         }
 
+        mutable value_type value;
         unsigned nextFreeIdx:12;
         unsigned counter: 15;
         unsigned active:1;
         unsigned eol: 1; // end of list
-        mutable char entry[sizeof(value_type)];
     };
 
 protected:
-
     NXHandleEntry _entries[kMaxEntries];
     nx_u32 _nActive;
     nx_u32 _firstFreeIdx;
+    const NXString _name;
 };
 
 

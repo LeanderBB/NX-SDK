@@ -33,10 +33,12 @@ class NXOGLBuffer : public NXOGLObj
 
 public:
 
-    static NXOGLBuffer* create(const NXGPUBufferDesc& desc);
+    static NXTLSharedPtr<NXOGLBuffer> create(const NXGPUBufferDesc& desc);
 
-    static NXOGLBuffer* create(const NXGPUBufferDesc& desc,
-                               const void* pData);
+    static NXTLSharedPtr<NXOGLBuffer> create(const NXGPUBufferDesc& desc,
+                                            const void* pData);
+
+    NXOGLBuffer(const NXGPUBufferDesc& desc);
 
     ~NXOGLBuffer();
 
@@ -50,7 +52,7 @@ public:
 
 protected:
 
-    NXOGLBuffer(const NXGPUBufferDesc& desc);
+
 
     void allocateStorage(const void *ptr = nullptr);
 
@@ -62,6 +64,8 @@ protected:
     nx_u32 _oglType;
     bool _mapped;
 };
+
+typedef NXTLSharedPtr<NXOGLBuffer> NXOGLBufferPtr_t;
 
 }
 #endif

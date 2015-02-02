@@ -74,6 +74,7 @@ public:
     /// return false on failure
     static bool fileSize(size_t &out, const char* path);
 
+    static const char* fileExtension(const char* path);
 };
 
 }

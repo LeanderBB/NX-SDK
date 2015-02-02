@@ -19,8 +19,8 @@
 #ifndef __NX_GPUPROGRAMSOURCE_H__
 #define __NX_GPUPROGRAMSOURCE_H__
 
-#include "nxgpu.h"
-#include "nx/media/nxmediaitem.h"
+#include "nx/gpu/nxgpu.h"
+
 namespace nx
 {
 class NXFileManager;
@@ -36,12 +36,14 @@ public:
 
     virtual const char* sourceForType(const GPUShaderType type) const = 0;
 
+    virtual size_t memorySize() const = 0;
+
 protected:
     NXGPUProgramSourceBase(){}
 };
 
 
-class NXGPUProgramSource : public NXGPUProgramSourceBase, public NXMediaItem
+class NXGPUProgramSource : public NXGPUProgramSourceBase
 {
 public:
 
@@ -51,9 +53,11 @@ public:
     virtual ~NXGPUProgramSource();
 
 
-    const char* sourceForType(const GPUShaderType type) const;
+    const char* sourceForType(const GPUShaderType type) const NX_CPP_OVERRIDE;
 
     void unload();
+
+    size_t memorySize() const NX_CPP_OVERRIDE;
 
 protected:
         NXGPUProgramSource(void* pData,
@@ -72,7 +76,7 @@ public:
 
     NXGPUProgramSourceManual();
 
-    const char* sourceForType(const GPUShaderType type) const;
+    const char* sourceForType(const GPUShaderType type) const NX_CPP_OVERRIDE;
 
     void setSourceVertex(const char* source);
 
@@ -85,6 +89,8 @@ public:
     void setSourceTessControl(const char* source);
 
     void setSourceCompute(const char* source);
+
+    size_t memorySize() const NX_CPP_OVERRIDE;
 
 protected:
     NXString _srcVertex;

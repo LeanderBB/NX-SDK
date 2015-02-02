@@ -83,11 +83,7 @@ NXMediaManager::create(const char* path,
     hdl = _handles.add(type, p_info);
 
     // check if the handle is valid
-    if (hdl == NX_HDL_INVALID)
-    {
-        delete p_info;
-    }
-    else
+    if (hdl.valid())
     {
         p_info->type = type;
         p_info->path = path;

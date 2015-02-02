@@ -30,7 +30,8 @@
 #include "nx/log/nxlog.h"
 #include "nx/os/nxatomic.h"
 #include "nx/os/nxthread.h"
-
+#include "nx/hdl/nxhdl.h"
+#include "nx/util/nxtlsharedptr.h"
 
 
 #endif

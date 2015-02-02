@@ -86,11 +86,10 @@ NXOGLCompileShader(const GPUShaderType type,
     }
 }
 
-NXOGLProgram*
+NXTLSharedPtr<NXOGLProgram>
 NXOGLProgram::create(const NXGPUProgramSourceBase *pSource)
 {
-    NXOGLProgram* p_prog = nullptr;
-
+    NXOGLProgramPtr_t prog;
     nx_u32 shaders[kGPUShaderTypeTotal];
     bool success_build = true;
 
@@ -116,41 +115,41 @@ NXOGLProgram::create(const NXGPUProgramSourceBase *pSource)
     // create program only if all shaders compiled successfully
     if (success_build)
     {
-        p_prog = new NXOGLProgram();
+        prog = nxMakeTLShared<NXOGLProgram>();
 
         // attach shaders
         for (int i = 0; i < kGPUShaderTypeTotal; ++i)
         {
             if (shaders[i])
             {
-                glAttachShader(p_prog->oglHdl(), shaders[i]);
+                glAttachShader(prog->oglHdl(), shaders[i]);
             }
         }
 
         // link
-        glLinkProgram(p_prog->oglHdl());
+        glLinkProgram(prog->oglHdl());
 
         // check result
         GLint r = 0;
-        glGetProgramiv(p_prog->oglHdl(), GL_LINK_STATUS, &r);
+        glGetProgramiv(prog->oglHdl(), GL_LINK_STATUS, &r);
         if (!(r == GL_TRUE))
         {
             // get program log
             GLsizei len, written;
-            glGetProgramiv(p_prog->oglHdl(), GL_INFO_LOG_LENGTH, &len);
+            glGetProgramiv(prog->oglHdl(), GL_INFO_LOG_LENGTH, &len);
             if (len > 0)
             {
                 char* p_program_log = (char*)NXMalloc(len + 1);
-                glGetProgramInfoLog(p_prog->oglHdl(), len, &written, p_program_log);
+                glGetProgramInfoLog(prog->oglHdl(), len, &written, p_program_log);
                 p_program_log[len] = '\0';
                 NXLogError("OGLProgram: Failed to link program:\n%s\n", p_program_log);
                 NXFree(p_program_log);
             }
 #if defined(NX_DEBUG) || defined(NX_GPUPROGRAM_LOG_EXTENSIVE_ON_ERROR)
-            p_prog->logInfo();
+            prog->logInfo();
 #endif
             // delete program on failure
-            NX_SAFE_DELETE(p_prog);
+            prog.reset();
         }
 
     }
@@ -164,7 +163,7 @@ NXOGLProgram::create(const NXGPUProgramSourceBase *pSource)
         }
     }
 
-    return p_prog;
+    return prog;
 }
 
 void

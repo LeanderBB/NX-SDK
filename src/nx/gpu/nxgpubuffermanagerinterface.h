@@ -16,57 +16,39 @@
 // You should have received a copy of the GNU General Public License
 // along with NX. If not, see <http://www.gnu.org/licenses/>.
 //
-#ifndef __NX_OGLOBJ_H__
-#define __NX_OGLOBJ_H__
+#ifndef __NX_GPUBUFFERMANAGERINTERFACE_H__
+#define __NX_GPUBUFFERMANAGERINTERFACE_H__
 
-
-#define NX_OGL_HDL_INVALID NX_U32_MAX
-#include "nx/util/nxtlsharedptr.h"
+#include "nx/gpu/nxgpubuffer.h"
 
 namespace nx
 {
-
-typedef nx_u32 nxglhdl_t;
-class NXOGLObj
+class NXGPUInterface;
+class NXGPUBufferManagerInterface
 {
-public:
+    public:
 
-    NXOGLObj() :
-        _oglhdl(NX_OGL_HDL_INVALID)
-    {
+    virtual ~NXGPUBufferManagerInterface(){}
 
-    }
+    virtual NXGPUBufferPtr_t create(const NXGPUBufferDesc& desc) = 0;
 
-    virtual ~NXOGLObj()
-    {
-        NX_ASSERT(_oglhdl == NX_OGL_HDL_INVALID);
-    }
+    virtual void destroy(const NXGPUBuffer* pBuffer) = 0;
 
-
-    nxglhdl_t oglHdl() const
-    {
-        return _oglhdl;
-    }
-
-    bool oglHdlValid() const
-    {
-        return _oglhdl != NX_OGL_HDL_INVALID;
-    }
 
 protected:
-
-    void oglHdlInvalidate()
+    NXGPUBufferManagerInterface(NXGPUInterface* pGPUInterface):
+    _pGPUInterface(pGPUInterface)
     {
-        _oglhdl = NX_OGL_HDL_INVALID;
     }
 
+private:
+    NX_CPP_NO_COPY(NXGPUBufferManagerInterface);
+
+
 protected:
-    nxglhdl_t _oglhdl;
+    NXGPUInterface* _pGPUInterface;
+
 };
 
-typedef NXTLSharedPtr<NXOGLObj> NXOGLObjPtr_t;
-
-
 }
-
 #endif

@@ -19,7 +19,7 @@
 #ifndef __NX_OGLPROGRAM_H__
 #define __NX_OGLPROGRAM_H__
 
-#include "nxoglobj.h"
+#include "nx/ogl/nxoglobj.h"
 
 namespace nx
 {
@@ -28,19 +28,18 @@ class NXOGLProgram : public NXOGLObj
 {
 public:
 
-    static NXOGLProgram* create(const NXGPUProgramSourceBase* pSource);
+    static NXTLSharedPtr<NXOGLProgram> create(const NXGPUProgramSourceBase* pSource);
+
+    NXOGLProgram();
 
     ~NXOGLProgram();
 
     void logInfo() const;
-
-protected:
-
-    NXOGLProgram();
-
 private:
     NX_CPP_NO_COPY(NXOGLProgram);
 };
+
+typedef NXTLSharedPtr<NXOGLProgram> NXOGLProgramPtr_t;
 
 }
 #endif

@@ -23,6 +23,7 @@
 #include "nx/sys/nxinputmanager.h"
 #include "nx/allocator/nxmemory.h"
 #include "nx/event/nxeventlistener.h"
+#include "nx/allocator/nxmemory.h"
 
 namespace nx
 {
@@ -99,6 +100,18 @@ private:
 };
 
 
+#if defined(NX_MEMORY_TRACK_ALLOCATIONS)
+#define NX_APP_EXIT_CHECKS \
+    if (nx::NXAllocatedMemory() != 0) \
+    { \
+        printf("NXApp Failed to release all memory, %" NX_PRIsize "b unreleased!!\n", \
+        nx::NXAllocatedMemory()); \
+    }\
+    NX_ASSERT(nx::NXAllocatedMemory() == 0);
+#else
+#define NX_APP_EXIT_CHECKS
+#endif
+
 #if defined(NX_OS_ANDROID)
 #define NX_MAIN_ENTRY nx_android_main
 #else
@@ -114,6 +127,7 @@ int NX_MAIN_ENTRY (const int argc, \
         CLASS app; \
         exit_code = app.run(argc, argv); \
     } \
+    NX_APP_EXIT_CHECKS \
     return exit_code;\
 }
 

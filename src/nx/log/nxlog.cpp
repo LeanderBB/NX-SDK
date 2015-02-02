@@ -103,6 +103,7 @@ NXLogFatal(const char* format, ...)
     va_start(argptr, format);
     logInternal(NX_LOG_PREFIX_FATAL, format, argptr);
     va_end(argptr);
+    NX_DEBUG_BREAK();
     exit(1);
 }
 

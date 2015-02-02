@@ -53,7 +53,7 @@ NX3DModel::load(NXIOBase* pIO)
         return nullptr;
     }
 
-    NX3DModel* p_model = new NX3DModel(hdr, p_buffer);
+    NX3DModel* p_model = new NX3DModel(hdr, p_buffer, buffer_size);
 
     p_model->init();
 
@@ -62,6 +62,7 @@ NX3DModel::load(NXIOBase* pIO)
 
 NX3DModel::~NX3DModel()
 {
+    unload();
     NX_ASSERT(_pContent == nullptr);
 }
 
@@ -131,15 +132,17 @@ NX3DModel::unload()
     {
         NXFree((void*)_pContent);
         _pContent = nullptr;
+        _contentSize = 0;
     }
 }
 
 NX3DModel::NX3DModel(const NX3DModelHeader& hdr,
-                     const void* pBuffer):
-    NXMediaItem(),
+                     const void* pBuffer,
+                     const size_t size):
     _hdr(hdr),
     _entries(),
-    _pContent(static_cast<const char*>(pBuffer))
+    _pContent(static_cast<const char*>(pBuffer)),
+    _contentSize(size)
 {
 
 }
@@ -169,6 +172,12 @@ NX3DModel::init()
 
         offset += sizeof(NX3DModelEntry) + p_entry->size;
     }
+}
+
+size_t
+NX3DModel::memorySize() const
+{
+    return sizeof(NX3DModel) + (sizeof(NX3DModelEntry) * _entries.size()) + _contentSize;
 }
 
 }

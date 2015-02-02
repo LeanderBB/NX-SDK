@@ -136,6 +136,7 @@ set(PROJ_HDR
     nx/util/nxspscqueue.h
     nx/util/nxmpmcqueue.h
     nx/util/nxpool.h
+    nx/util/nxtlsharedptr.h
     nx/task/nxtaskexecutor.h
     nx/task/nxtaskmanager.h
     nx/task/nxtask.h
@@ -151,25 +152,27 @@ set(PROJ_HDR
     nx/sys/android/nxandroidinput.h
     nx/sys/android/nxsystemandroid.h
     nx/sys/android/nxwindowandroid.h
-    nx/sys/gl/core44/flextGL.h
     nx/sys/nxapp.h
     nx/nx3d.h
+    nx/ogl/core44/flextGL.h
     nx/ogl/nxoglinternal.h
     nx/ogl/nxogl.h
     nx/ogl/nxoglobj.h
     nx/ogl/nxoglprogram.h
     nx/ogl/nxogltexture.h
     nx/ogl/nxoglbuffer.h
+    nx/ogl/nxgpuinterfaceogl.h
+    nx/ogl/nxoglshaderinput.h
+    nx/gpu/nxgpubuffermanagerinterface.h
+    nx/gpu/nxgpubuffermanagersimple.h
     nx/gpu/nxgpu.h
+    nx/gpu/nxgpuinterface.h
     nx/gpu/nxgpuprogramsource.h
     nx/gpu/nxgputexture.h
     nx/gpu/nxgpubuffer.h
-    nx/gpu/nxgpuresource.h
-    nx/gpu/nxgpuresourcemanager.h
+    nx/gpu/nxgpushaderinput.h
     nx/media/nximage.h
     nx/media/nx3dmodel.h
-    nx/media/nxmediaitem.h
-    nx/media/nxmediamanager.h
     nx/math/nx3dmath.h
     nx/math/nxtransform.h
     nx/math/nxboundingvolumes.h
@@ -178,6 +181,12 @@ set(PROJ_HDR
     nx/math/nxintersect.h
     nx/scene/nxscenebase.h
     nx/scene/nxentitybase.h
+    nx/resource/nxresourcemanager.h
+    nx/resource/nxresource.h
+    nx/resource/nximageresource.h
+    nx/resource/nxgputextureresource.h
+    nx/resource/nx3dmodelresource.h
+    nx/resource/nxgpuprogramresource.h
 )
 
 
@@ -220,25 +229,33 @@ set(PROJ_SRC
     nx/sys/android/nxandroidinput.cpp
     nx/sys/android/nxsystemandroid.cpp
     nx/sys/android/nxwindowandroid.cpp
-    nx/sys/gl/core44/flextGL.c
     nx/sys/nxapp.cpp
     nx/nx3d.cpp
+    nx/ogl/core44/flextGL.c
     nx/ogl/nxogl.cpp
     nx/ogl/nxoglprogram.cpp
     nx/ogl/nxogltexture.cpp
     nx/ogl/nxoglbuffer.cpp
+    nx/ogl/nxgpuinterfaceogl.cpp
+    nx/ogl/nxoglshaderinput.cpp
     nx/gpu/nxgpuprogramsource.cpp
     nx/gpu/nxgputexture.cpp
     nx/gpu/nxgpubuffer.cpp
-    nx/gpu/nxgpuresourcemanager.cpp
+    nx/gpu/nxgpubuffermanagersimple.cpp
+    nx/gpu/nxgpushaderinput.cpp
     nx/media/nximage.cpp
     nx/media/nx3dmodel.cpp
-    nx/media/nxmediamanager.cpp
     nx/math/nxtransform.cpp
     nx/math/nxplane.cpp
     nx/math/nxboundingvolumes.cpp
     nx/math/nxintersect.cpp
     nx/scene/nxscenebase.cpp
+    nx/resource/nxresourcemanager.cpp
+    nx/resource/nxresource.cpp
+    nx/resource/nximageresource.cpp
+    nx/resource/nxgputextureresource.cpp
+    nx/resource/nx3dmodelresource.cpp
+    nx/resource/nxgpuprogramresource.cpp
 )
 
 if(ANDROID)

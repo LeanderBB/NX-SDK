@@ -31,6 +31,10 @@
 #include "nx/gpu/nxgpuprogramsource.h"
 #include "nx/sys/nxwindow.h"
 #include "nx/ogl/nxoglinternal.h"
+#include "nx/gpu/nxgpuinterface.h"
+#include "nx/resource/nxresourcemanager.h"
+#include "nx/resource/nxgputextureresource.h"
+#include "nx/resource/nxgpuprogramresource.h"
 
 namespace nx
 {
@@ -52,8 +56,8 @@ static const char* s_fragment_source =
 //uniform sampler2DArray s;\n\
 uniform sampler2D s;\n\
 out vec4 color;\n\
-uniform int window_width;\n\
-uniform int window_height;\n\
+layout(location = 1) uniform int window_width;\n\
+layout(location = 2) uniform int window_height;\n\
 \n\
 void main(void) \
 { \
@@ -88,20 +92,26 @@ protected:
 
 private:
     NXFileManager _fileManager;
-    NXOGLTexture* _pTex;
-    NXOGLProgram* _pProg;
-    NXIOFile* _pFile;
+    NXResourceManager _resManager;
+    NXString _filePath;
+    NXGPUInterface* _pGPUInterface;
+    NXHdl _hdlProg;NXGPUTextureResourcePtr_t ptr = nxMakeTLShared<NXGPUTextureResource>("texture", _filePath.c_str());
+    NXHdl _hdlTex;
     GLuint _vao;
     GLint _locWinWidth;
     GLint _locWinHeight;
+
 };
 
 
 NXImageViewer::NXImageViewer():
     NXApp("NXImageViewer"),
-    _pTex(nullptr),
-    _pProg(nullptr),
-    _pFile(nullptr),
+    _fileManager(),
+    _resManager(_fileManager),
+    _filePath(),
+    _hdlProg(),
+    _hdlTex(),
+    _vao(),
     _locWinWidth(-1),
     _locWinHeight(-1)
 {
@@ -129,14 +139,14 @@ NXImageViewer::onAppInit(const int argc,
         return false;
     }
 
-    // open file
-    _pFile = NXIOFile::open(argv[1], kIOAccessModeReadBit);
-
-    if (!_pFile)
+    if (!_fileManager.mount("/","", true))
     {
-        NXLogError("Failed to open '%s'\n", argv[1]);
+        NXLogError("Failed to mount root file system");
         return false;
     }
+
+    // save file
+    _filePath = argv[1];
 
     return true;
 }
@@ -148,7 +158,8 @@ NXImageViewer::appRun()
     glClearBufferfv(GL_COLOR, 0, green);
 
 
-    glUseProgram(_pProg->oglHdl());
+    _pGPUInterface->bindProgram(_hdlProg);
+
     glViewport(0, 0, system()->window()->width(), system()->window()->height());
     glUniform1i(_locWinWidth, system()->window()->width());
     glUniform1i(_locWinHeight, system()->window()->height());
@@ -158,10 +169,7 @@ NXImageViewer::appRun()
 void
 NXImageViewer::onAppWillTerm()
 {
-    if (_pFile)
-    {
-        NX_SAFE_DELETE(_pFile);
-    }
+    _resManager.clear();
     _fileManager.clear();
 }
 
@@ -169,63 +177,59 @@ void
 NXImageViewer::onWindowCreated()
 {
 
-    // reset seek
-    _pFile->seek(0, kIOSeekOpSet);
+    _pGPUInterface = NXGPUInterface::create();
 
-    // load image
-    NXImage* p_imgsrc = NXImage::load(_pFile);
+    if (!_pGPUInterface->init())
+    {
+        NXLogError("Failed to init GPU Interface");
+        quit();
+        return;
+    }
+
+    _resManager.setGPUInterface(_pGPUInterface);
 
 
-    if (!p_imgsrc)
+    _hdlTex = _resManager.create("texture", _filePath.c_str());
+    _resManager.load(_hdlTex);
+    if (!_resManager.isLoaded(_hdlTex))
     {
         quit();
         return;
     }
 
-    NXImage::ImageInfo(p_imgsrc->header());
+    NXGPUTextureResourcePtr_t ptr = _resManager.get(_hdlTex);
 
-    // create ogl tex
-    _pTex = NXOGLTexture::create(*p_imgsrc);
-    // delete img source
-    p_imgsrc->unload();
-    NX_SAFE_DELETE(p_imgsrc);
+    NXGPUProgramResourcePtr_t prog_ptr = NXGPUProgramResource::create("program", nullptr);
 
-    if (!_pTex)
+    auto prg_src = new NXGPUProgramSourceManual();
+    prg_src->setSourceVertex(s_vertex_source);
+    prg_src->setSourceFragment(s_fragment_source);
+    prog_ptr->setSource(prg_src);
+
+    NXHdl prog_hdl = _resManager.registerResource(prog_ptr);
+
+    _resManager.load(prog_hdl);
+
+    if(!_resManager.isLoaded(prog_hdl))
     {
         quit();
         return;
     }
 
-    NXGPUProgramSourceManual prg_src;
-
-    prg_src.setSourceVertex(s_vertex_source);
-    prg_src.setSourceFragment(s_fragment_source);
-
-    _pProg = NXOGLProgram::create(&prg_src);
-
-    if (!_pProg)
-    {
-        quit();
-        return;
-    }
+    _hdlProg = prog_ptr->gpuHdl();
 
     // locate uniforms
 
-    _locWinWidth = glGetUniformLocation(_pProg->oglHdl(), "window_width");
-    _locWinHeight = glGetUniformLocation(_pProg->oglHdl(), "window_height");
+    _locWinWidth = 1;
+    _locWinHeight = 2;
 
-    if (_locWinHeight == -1 || _locWinWidth == -1)
-    {
-        NXLogError("Failed to locate uniforms");
-        quit();
-        return;
-    }
 
     glGenVertexArrays(1, &_vao);
     glBindVertexArray(_vao);
-    glBindTexture(_pTex->oglType(), _pTex->oglHdl());
+    _pGPUInterface->bindTexture(_hdlTex, 0);
 
-    system()->window()->setDimensions(_pTex->desc().width, _pTex->desc().height);
+    const NXGPUTexture* p_tex = ptr->texture();
+    system()->window()->setDimensions(p_tex->width(), p_tex->height());
 }
 
 void
@@ -234,16 +238,11 @@ NXImageViewer::onWindowWillBeDestroyed()
     glBindVertexArray(0);
     glDeleteVertexArrays(1, &_vao);
 
-    if (_pTex)
+    if (_pGPUInterface)
     {
-        NX_SAFE_DELETE(_pTex);
+        _pGPUInterface->shutdown();
+        NX_SAFE_DELETE(_pGPUInterface);
     }
-
-    if (_pProg)
-    {
-        NX_SAFE_DELETE(_pProg);
-    }
-
 }
 
 }

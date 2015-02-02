@@ -44,9 +44,9 @@ class NXOGLTexture : public NXOGLObj
 
 public:
 
-    static NXOGLTexture* create(const NXGPUTextureDesc& desc);
+    static NXTLSharedPtr<NXOGLTexture> create(const NXGPUTextureDesc& desc);
 
-    static NXOGLTexture* create(const NXImage& img);
+    static NXTLSharedPtr<NXOGLTexture> create(const NXImage& img);
 
     ~NXOGLTexture();
 
@@ -60,7 +60,7 @@ public:
         return _oglType;
     }
 
-    void use(const nx_u32 unit) const;
+    void bind(const nx_u32 unit) const;
 
     bool upload(const void* pData,
                 const size_t size,
@@ -70,9 +70,9 @@ public:
                 const nx_u32 mipLvl,
                 const int unpackAlignment = 1);
 
-protected:
-
     NXOGLTexture(const NXGPUTextureDesc& desc);
+
+protected:
 
     bool allocateStorage();
 
@@ -84,6 +84,7 @@ protected:
     const nx_u32 _oglType;
 };
 
+typedef NXTLSharedPtr<NXOGLTexture> NXOGLTexturePtr_t;
 
 /*
 class NXOGLTextureBinder

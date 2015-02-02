@@ -19,10 +19,7 @@
 #ifndef __NX_GPUMANAGER_H__
 #define __NX_GPUMANAGER_H__
 
-#include "nx/gpu/nxgputexture.h"
-#include "nx/gpu/nxgpuprogramsource.h"
 #include "nx/hdl/nxhdlmanager.h"
-#include "nx/gpu/nxgpubuffer.h"
 #include "nx/gpu/nxgpuresource.h"
 namespace nx
 {
@@ -38,11 +35,12 @@ enum GPUResourceType
 
 class NXImage;
 class NXMediaManager;
-
+class NXGPUInterface;
 class NXGPUResourceManager
 {
 public:
-    NXGPUResourceManager(NXMediaManager& mediaManager);
+    NXGPUResourceManager(NXMediaManager& mediaManager,
+                         NXGPUInterface* pGPUInterface);
 
     ~NXGPUResourceManager();
 
@@ -104,6 +102,7 @@ private:
 
 protected:
     NXMediaManager& _mediaManager;
+    NXGPUInterface* _pGPUInterface;
     NXHandleManager<ItemInfo> _handles;
 };
 

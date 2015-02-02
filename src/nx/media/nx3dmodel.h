@@ -19,8 +19,6 @@
 #ifndef __NX_3DMODEL_H__
 #define __NX_3DMODEL_H__
 
-#include "nx/media/nxmediaitem.h"
-
 namespace nx
 {
 
@@ -70,7 +68,7 @@ struct NX3DModelEntry
 };
 
 class NXIOBase;
-class NX3DModel : public NXMediaItem
+class NX3DModel
 {
 public:
     struct ModelEntry
@@ -94,13 +92,15 @@ public:
 
     void logInfo() const;
 
-    virtual void unload();
+    void unload();
 
+    size_t memorySize() const;
 
 protected:
 
     NX3DModel(const NX3DModelHeader& hdr,
-              const void* pBuffer);
+              const void* pBuffer,
+              const size_t size);
 
     void init();
 
@@ -110,6 +110,7 @@ protected:
     EntryVec_t _entries;
     ModelEntry _indices;
     const char* _pContent;
+    size_t _contentSize;
 };
 
 

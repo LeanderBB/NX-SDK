@@ -18,14 +18,15 @@
 //
 #include "nx/nxcore.h"
 #include "nx/gpu/nxgpuresourcemanager.h"
+#include "nx/gpu/nxgpuinterface.h"
 #include "nx/media/nxmediamanager.h"
-#include "nx/ogl/nxogltexture.h"
-#include "nx/ogl/nxoglprogram.h"
 namespace nx
 {
 
-NXGPUResourceManager::NXGPUResourceManager(NXMediaManager &mediaManager):
-    _mediaManager(mediaManager)
+NXGPUResourceManager::NXGPUResourceManager(NXMediaManager &mediaManager,
+                                           NXGPUInterface *pGPUInterface):
+    _mediaManager(mediaManager),
+    _pGPUInterface(pGPUInterface)
 {
 
 }
@@ -216,7 +217,7 @@ NXGPUResourceManager::loadTexture(ItemInfo* pInfo)
         return;
     }
 
-    pInfo->p_res = NXOGLTexture::create(*p_image);
+    pInfo->p_res = _pGPUInterface->allocTexture(*p_image);
 }
 
 void
@@ -229,7 +230,7 @@ NXGPUResourceManager::loadProgram(ItemInfo* pInfo)
         return;
     }
 
-    pInfo->p_res = NXOGLProgram::create(p_source);
+    pInfo->p_res = _pGPUInterface->allocProgram(*p_source);
 }
 
 }

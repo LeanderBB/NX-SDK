@@ -226,31 +226,30 @@ const NXOGLTextureDescription* NXOGLTextureDescriptions()
 
 // -- NXOGLTexutre ------------------------------------------------------------
 
-NXOGLTexture*
+NXTLSharedPtr<NXOGLTexture>
 NXOGLTexture::create(const NXGPUTextureDesc& desc)
 {
-    NXOGLTexture* p_tex = new NXOGLTexture(desc);
+    NXOGLTexturePtr_t tex = nxMakeTLShared<NXOGLTexture>(desc);
 
-    if (!p_tex->allocateStorage())
+    if (!tex->allocateStorage())
     {
-        NX_SAFE_DELETE(p_tex);
+        tex.reset();
     }
-    return p_tex;
+    return tex;
 }
 
-NXOGLTexture*
+NXTLSharedPtr<NXOGLTexture>
 NXOGLTexture::create(const NXImage& img)
 {
-    NXOGLTexture* p_result = nullptr;
 
     NXGPUTextureDesc desc;
     NXImage::ImageHeaderToGPUTextureDescription(img.header(), desc);
 
-    p_result = NXOGLTexture::create(desc);
+    NXOGLTexturePtr_t tex = NXOGLTexture::create(desc);
 
-    if (!p_result)
+    if (!tex)
     {
-        return nullptr;
+        return tex;
     }
 
 
@@ -263,23 +262,24 @@ NXOGLTexture::create(const NXImage& img)
         {
             NXLogError("OGLTexture: Mip map level %d not available for texture, max mip map level = %d",
                        i, desc.nMipMap);
-            NX_SAFE_DELETE(p_result);
+            tex.reset();
             break;
         }
 
         bool upload_result = false;
-        upload_result = p_result->upload(p_mip_data, p_mipi->size, p_mipi->width,
+        upload_result = tex->upload(p_mip_data, p_mipi->size, p_mipi->width,
                                          p_mipi->height, p_mipi->depth,
                                          i, 4);
 
         if (!upload_result)
         {
             NXLogError("OGLTexture: Failed to upload map level %d", i);
-            NX_SAFE_DELETE(p_result);
+            tex.reset();
+            break;
         }
     }
 
-    return p_result;
+    return tex;
 }
 
 NXOGLTexture::~NXOGLTexture()
@@ -292,7 +292,7 @@ NXOGLTexture::~NXOGLTexture()
 }
 
 void
-NXOGLTexture::use(const nx_u32 unit) const
+NXOGLTexture::bind(const nx_u32 unit) const
 {
     NXBindTexture(oglHdl(), _desc.type, unit);
 }

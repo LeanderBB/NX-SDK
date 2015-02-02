@@ -26,6 +26,7 @@
 #include <unordered_set>
 #include <queue>
 #include <algorithm>
+#include <memory>
 #include <limits>
 #include <stack>
 #include <set>

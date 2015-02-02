@@ -34,6 +34,7 @@ NXGPUProgramSource::NXGPUProgramSource(void* pData,
 
 NXGPUProgramSource::~NXGPUProgramSource()
 {
+    unload();
     NX_ASSERT(_pData == nullptr);
 }
 
@@ -90,6 +91,12 @@ NXGPUProgramSource::unload()
         NXFree((void*)_pData);
         _pData = nullptr;
     }
+}
+
+size_t
+NXGPUProgramSource::memorySize() const
+{
+    return sizeof(NXGPUProgramSource) + _dataSize;
 }
 
 NXGPUProgramSourceManual::NXGPUProgramSourceManual():
@@ -155,6 +162,17 @@ void
 NXGPUProgramSourceManual::setSourceCompute(const char* source)
 {
     _srcCompute = source;
+}
+
+size_t
+NXGPUProgramSourceManual::memorySize() const
+{
+    return sizeof(NXGPUProgramSourceManual) +
+            _srcVertex.capacity() +
+            _srcFragment.capacity() +
+            _srcGeometry.capacity() +
+            _srcTessControl.capacity() +
+            _srcTessControl.capacity();
 }
 
 }

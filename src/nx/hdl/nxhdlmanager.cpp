@@ -22,6 +22,4 @@
 namespace nx
 {
 
-template class NXHandleManager<void*>;
-
 }

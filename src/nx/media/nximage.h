@@ -20,7 +20,6 @@
 #define __NX_IMAGE_H__
 
 #include "nx/gpu/nxgputexture.h"
-#include "nx/media/nxmediaitem.h"
 
 namespace nx
 {
@@ -82,7 +81,7 @@ struct NXImageAttributeHeader
 
 
 class NXIOBase;
-class NXImage : public NXMediaItem
+class NXImage
 {
 public:
     static const nx_u8 sMagic[12];
@@ -116,12 +115,14 @@ public:
 
     const void* mipMapData(const nx_u32 idx) const;
 
+    size_t memorySize() const;
+
     const NXImageHeader& header() const
     {
         return _hdr;
     }
 
-    virtual void unload();
+    void unload();
 
 protected:
 

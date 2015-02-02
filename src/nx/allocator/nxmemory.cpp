@@ -80,7 +80,7 @@ NXAllocatedMemory()
 #if defined(NX_MEMORY_TRACK_ALLOCATIONS)
     return gTracker.bytesAllocated();
 #else
-    return NX_SIZE_T_MAX;
+    return 0;
 #endif
 }
 

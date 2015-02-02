@@ -16,15 +16,34 @@
 // You should have received a copy of the GNU General Public License
 // along with NX. If not, see <http://www.gnu.org/licenses/>.
 //
-#ifndef __NX_MEDIAITEM_H__
-#define __NX_MEDIAITEM_H__
+
+#include "nx/nxcore.h"
+#include "nx/gpu/nxgpubuffermanagersimple.h"
+#include "nx/gpu/nxgpuinterface.h"
 
 namespace nx
 {
-NX_INTERFACE_BEGIN(NXMediaItem)
-
-    virtual void unload() = 0;
-
-NX_INTERFACE_END()
+NXGPUBufferPtr_t
+NXGPUBufferManagerSimple::create(const NXGPUBufferDesc& desc)
+{
+    NXGPUBufferPtr_t ptr;
+    NXHdl gpuhdl = _pGPUInterface->allocBuffer(desc);
+    if (gpuhdl)
+    {
+        NXGPUBufferHdl buff_hdl;
+        buff_hdl.gpuhdl = gpuhdl;
+        buff_hdl.offset = 0;
+        ptr = nxMakeTLShared<NXGPUBuffer>(desc, buff_hdl, *this);
+    }
+    return ptr;
 }
-#endif
+
+void
+NXGPUBufferManagerSimple::destroy(const NXGPUBuffer* pBuffer)
+{
+    _pGPUInterface->releaseBuffer(pBuffer->hdl().gpuhdl);
+}
+
+}
+
+

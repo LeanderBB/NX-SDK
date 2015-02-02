@@ -148,6 +148,7 @@ NXImage::ImageInfo(const NXImageHeader &hdr)
 
 NXImage::~NXImage()
 {
+    unload();
     NX_ASSERT(_pData == nullptr);
 }
 
@@ -211,6 +212,12 @@ NXImage::mipMapData(const nx_u32 idx) const
     return (idx < _mipMapInfo.size()) ? (const char*) _pData + _mipMapInfo[idx].offset : nullptr;
 }
 
+size_t
+NXImage::memorySize() const
+{
+   return sizeof(NXImage) + _dataSize;
+}
+
 void
 NXImage::unload()
 {
@@ -227,7 +234,6 @@ NXImage::NXImage(const NXImageHeader& hdr,
                  void* pData,
                  const size_t dataSize,
                  MipMapInfoVec_t& mipMapInfo):
-    NXMediaItem(),
     _hdr(hdr),
     _pData(pData),
     _dataSize(dataSize),

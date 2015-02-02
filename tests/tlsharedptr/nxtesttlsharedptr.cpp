@@ -16,20 +16,35 @@
 // You should have received a copy of the GNU General Public License
 // along with NX. If not, see <http://www.gnu.org/licenses/>.
 //
-#ifndef __NX_GPURESOURCE_H__
-#define __NX_GPURESOURCE_H__
 
-namespace nx
-{
-class NXGPUResource
+#include "nx/nxcore.h"
+#include "nx/util/nxtlsharedptr.h"
+
+
+class TestClass
 {
 public:
-    virtual ~NXGPUResource(){}
+    TestClass(const char* message):
+        msg(message)
+    {
+        nx::NXLog("Class created: %s", message);
+    }
+    ~TestClass()
+    {
+        nx::NXLog("Class destroyed: %s", msg);
+    }
 
-protected:
-    NXGPUResource(){}
-
+    const char* msg;
 };
 
+
+int main()
+{
+    auto ptr = nx::nxMakeTLShared<TestClass>("ptr1");
+    {
+        auto ptr2 = nx::nxMakeTLShared<TestClass>("ptr2");
+
+        ptr = ptr2;
+    }
+    return EXIT_SUCCESS;
 }
-#endif

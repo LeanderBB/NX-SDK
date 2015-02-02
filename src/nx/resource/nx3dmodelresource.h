@@ -16,57 +16,42 @@
 // You should have received a copy of the GNU General Public License
 // along with NX. If not, see <http://www.gnu.org/licenses/>.
 //
-#ifndef __NX_OGLOBJ_H__
-#define __NX_OGLOBJ_H__
+#ifndef __NX_3DMODELESOURCE_H__
+#define __NX_3DMODELESOURCE_H__
 
-
-#define NX_OGL_HDL_INVALID NX_U32_MAX
-#include "nx/util/nxtlsharedptr.h"
+#include "nx/resource/nxresource.h"
 
 namespace nx
 {
-
-typedef nx_u32 nxglhdl_t;
-class NXOGLObj
+class NX3DModel;
+class NX3DModelResource : public NXResource
 {
 public:
 
-    NXOGLObj() :
-        _oglhdl(NX_OGL_HDL_INVALID)
+    static const nxresourcetype_t sType;
+
+    static NXResourcePtr_t create(const char* name,
+                                  const char* path);
+
+    NX3DModelResource(const char* name,
+                      const char* path);
+
+    virtual ~NX3DModelResource();
+
+    void load(NXResourceManager& resourceManager) NX_CPP_OVERRIDE;
+
+    void unload(NXResourceManager& resourceManager) NX_CPP_OVERRIDE;
+
+    const NX3DModel* model() const
     {
-
-    }
-
-    virtual ~NXOGLObj()
-    {
-        NX_ASSERT(_oglhdl == NX_OGL_HDL_INVALID);
-    }
-
-
-    nxglhdl_t oglHdl() const
-    {
-        return _oglhdl;
-    }
-
-    bool oglHdlValid() const
-    {
-        return _oglhdl != NX_OGL_HDL_INVALID;
+        return _pModel;
     }
 
 protected:
-
-    void oglHdlInvalidate()
-    {
-        _oglhdl = NX_OGL_HDL_INVALID;
-    }
-
-protected:
-    nxglhdl_t _oglhdl;
+    NX3DModel* _pModel;
 };
 
-typedef NXTLSharedPtr<NXOGLObj> NXOGLObjPtr_t;
-
+typedef NXTLSharedPtr<NX3DModelResource> NX3DModelResourcePtr_t;
 
 }
-
 #endif

@@ -19,6 +19,8 @@
 #ifndef __NX_GPUTEXTURE_H__
 #define __NX_GPUTEXTURE_H__
 
+#include "nx/hdl/nxhdl.h"
+
 namespace nx
 {
 
@@ -187,6 +189,78 @@ struct NXGPUTextureDesc
     nx_u32 depth = 1;
     nx_u32 nArray = 0;
     nx_u32 nMipMap = 1;
+};
+
+class NXGPUTexture
+{
+public:
+
+
+    NXGPUTexture():
+        _desc(),
+        _gpuHdl()
+    {
+
+    }
+
+    nx_u32 width() const
+    {
+        return _desc.width;
+    }
+
+    nx_u32 height() const
+    {
+        return _desc.height;
+    }
+
+    nx_u32 depth() const
+    {
+        return _desc.depth;
+    }
+
+    nx_u32 nArraySlices() const
+    {
+        return _desc.nArray;
+    }
+
+    nx_u32 nMimpMaps() const
+    {
+        return _desc.nMipMap;
+    }
+
+    GPUTextureFormat format() const
+    {
+        return _desc.format;
+    }
+
+    GPUTextureType type() const
+    {
+        return _desc.type;
+    }
+
+    NXGPUTextureDesc& desc()
+    {
+        return _desc;
+    }
+
+    const NXGPUTextureDesc& desc() const
+    {
+        return _desc;
+    }
+
+    void setGpuHdl(const NXHdl hdl)
+    {
+        _gpuHdl = hdl;
+    }
+
+    NXHdl gpuHdl()
+    {
+        return _gpuHdl;
+    }
+
+protected:
+    NXGPUTextureDesc _desc;
+    NXHdl _gpuHdl; // handle to GPU resource
 };
 
 }
