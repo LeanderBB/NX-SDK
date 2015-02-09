@@ -1,7 +1,7 @@
 //
 // This file is part of the NX Project
 //
-// Copyright (c) 2014 Leander Beernaert
+// Copyright (c) 2015 Leander Beernaert
 //
 // NX Project is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -16,44 +16,48 @@
 // You should have received a copy of the GNU General Public License
 // along with NX. If not, see <http://www.gnu.org/licenses/>.
 //
-#ifndef __NX_GPUBUFFERMANAGERINTERFACE_H__
-#define __NX_GPUBUFFERMANAGERINTERFACE_H__
+#ifndef __NX_3DMODELPOSTPROCESS_H__
+#define __NX_3DMODELPOSTPROCESS_H__
 
-#include "nx/gpu/nxgpubuffer.h"
+#include "nx3dconverter.h"
+
 
 namespace nx
 {
-class NXGPUInterface;
-class NXGPUBufferManagerInterface
+
+enum PostProcessFlags
 {
-    public:
+    kPostProcessFlagInterleaved = NX_BIT(0)
+};
 
-    virtual ~NXGPUBufferManagerInterface(){}
+class NX3DModelPostProcess
+{
+public:
 
-    virtual NXGPUBufferPtr_t create(const NXGPUBufferDesc& desc) = 0;
+    NX3DModelPostProcess(const NXInputStateVec_t& input);
 
-    virtual void destroy(const NXGPUBuffer* pBuffer) = 0;
+    ~NX3DModelPostProcess();
 
-    NXGPUInterface& gpuInterface()
+    bool buildOutputData(const nx_u32 flags = 0);
+
+    const NXOutputState& output() const
     {
-        return *_pGPUInterface;
+        return _output;
     }
+private:
+    NX_CPP_NO_COPY(NX3DModelPostProcess);
 
-protected:
-    NXGPUBufferManagerInterface(NXGPUInterface* pGPUInterface):
-    _pGPUInterface(pGPUInterface)
-    {
-        NX_ASSERT(pGPUInterface);
-    }
+    bool validSeparateBuffers() const;
+
+    bool validInterleavedBuffers() const;
+
+    bool buildSeparate();
 
 private:
-    NX_CPP_NO_COPY(NXGPUBufferManagerInterface);
-
-
-protected:
-    NXGPUInterface* _pGPUInterface;
-
+    NXInputStateVec_t _input;
+    NXOutputState _output;
 };
 
 }
+
 #endif

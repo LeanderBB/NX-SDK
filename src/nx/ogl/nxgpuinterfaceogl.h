@@ -27,6 +27,7 @@
 #include "nx/ogl/nxoglprogram.h"
 #include "nx/ogl/nxoglbuffer.h"
 #include "nx/ogl/nxoglshaderinput.h"
+#include "nx/gpu/nxgpubuffermanagersimple.h"
 
 namespace nx
 {
@@ -41,8 +42,7 @@ public:
 
     void shutdown() NX_CPP_OVERRIDE;
 
-    NXHdl allocBuffer(const NXGPUBufferDesc& desc,
-                      const void *pData = nullptr) NX_CPP_OVERRIDE;
+    NXHdl allocBuffer(const NXGPUBufferDesc& desc) NX_CPP_OVERRIDE;
 
     void releaseBuffer(const NXHdl& hdl) NX_CPP_OVERRIDE;
 
@@ -78,6 +78,8 @@ public:
     int uniformLocation(const NXHdl& proghdl,
                         const char* uniform) const NX_CPP_OVERRIDE;
 
+    NXGPUBufferManagerInterface& gpuBufferManager() NX_CPP_OVERRIDE;
+
 
     NXOGLProgramPtr_t getProgram(const NXHdl& hdl) const;
 
@@ -93,6 +95,7 @@ protected:
     NXHandleManager<NXOGLProgramPtr_t, 256> _hdlsProgram;
     NXHandleManager<NXOGLTexturePtr_t, 256> _hdlsTexture;
     NXHandleManager<NXOGLShaderInputPtr_t, 256> _hdlsVAO;
+    NXGPUBufferManagerSimple _bufferManager;
 
 };
 }

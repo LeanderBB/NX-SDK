@@ -51,7 +51,7 @@ static bool NXReadFileIntoString(fbstrvec_t& out,
 {
     std::string str;
     std::string path = NXPath::join(shaderPath,filename);
-    NXIOFile* pFile = NXIOFile::open(path.c_str(), kIOAccessModeReadBit);
+    std::unique_ptr<NXIOFile> pFile (NXIOFile::open(path.c_str(), kIOAccessModeReadBit));
     if (!pFile)
     {
         fprintf(stderr, "Failed to read shader file '%s'\n", filename);
@@ -63,7 +63,6 @@ static bool NXReadFileIntoString(fbstrvec_t& out,
     str.resize(0, file_size + 1);
 
     bytes_read = pFile->read(&str[0], file_size);
-    delete pFile;
 
     if (bytes_read == file_size)
     {

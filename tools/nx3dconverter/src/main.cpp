@@ -1,7 +1,7 @@
 //
 // This file is part of the NX Project
 //
-// Copyright (c) 2014 Leander Beernaert
+// Copyright (c) 2015 Leander Beernaert
 //
 // NX Project is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -21,108 +21,73 @@
 #include <nx/media/nx3dmodel.h>
 #include <nx/io/nxiobase.h>
 #include <nx/io/nxiofile.h>
+#include <nx/os/nxargs.h>
 #include "nxassimpconverter.h"
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h> // collects data
 #include <assimp/postprocess.h> // various extra operations
 
+#include "nx3dmodelbuilder.h"
+#include "nx3dmodelpostprocess.h"
+
 using namespace nx;
-
-static void logAISceneInfo(const aiScene* pScene)
-{
-
-    NXLog(" # Meshes    : %d", pScene->mNumMeshes);
-    NXLog(" # Animations: %d", pScene->mNumAnimations);
-    NXLog(" # Materials : %d", pScene->mNumMaterials);
-    NXLog(" # Textures  : %d", pScene->mNumTextures);
-    NXLog(" # Lights    : %d", pScene->mNumLights);
-    NXLog(" # Cameras   : %d", pScene->mNumCameras);
-
-    NXLog("");
-
-    for (unsigned int i = 0; i < pScene->mNumMeshes; ++i)
-    {
-        NXLog("  Mesh (%d)", i);
-        const aiMesh* mesh= pScene->mMeshes[i];
-        NXLog("    # Vertices       : %d", mesh->mNumVertices);
-        NXLog("    # Faces          : %d", mesh->mNumFaces);
-        NXLog("    # Bones          : %d", mesh->mNumBones);
-        NXLog("    # Color Channels : %d", mesh->GetNumColorChannels());
-        NXLog("    # UV Components  : %d", mesh->GetNumUVChannels());
-        NXLog("    # Anim Meshes    : %d", mesh->mNumAnimMeshes);
-    }
-
-    for (unsigned int i = 0; i < pScene->mNumAnimations; ++i)
-    {
-        NXLog("  Anim (%d)", i);
-        const aiAnimation* anim= pScene->mAnimations[i];
-        NXLog("    Name            : %d", anim->mName.C_Str());
-        NXLog("    Duration        : %f", anim->mDuration);
-        NXLog("    # Channes       : %d", anim->mNumChannels);
-        NXLog("    # Mesh Channels : %d", anim->mNumMeshChannels);
-
-        for (unsigned int j = 0; j < anim->mNumChannels; ++j)
-        {
-            NXLog("    Channel (%d)", j );
-            const aiNodeAnim *channel = anim->mChannels[j];
-            NXLog("      Name            : %d", channel->mNodeName.C_Str());
-            NXLog("      # Position Keys : %d", channel->mNumPositionKeys);
-            NXLog("      # Rotation Keys : %d", channel->mNumRotationKeys);
-            NXLog("      # Scaling Keys  : %d", channel->mNumScalingKeys);
-        }
-
-        for (unsigned int j = 0; j < anim->mNumMeshChannels; ++j)
-        {
-            NXLog("    Mesh Channel (%d)", j );
-            const aiMeshAnim* manim = anim->mMeshChannels[j];
-            NXLog("      Name   : %d", manim->mName.C_Str());
-            NXLog("      # Keys : %d", manim->mNumKeys);
-        }
-    }
-}
-
-
 
 int main(const int argc, const char** argv)
 {
 
-    int exit = EXIT_FAILURE;
-    if (argc < 2)
-    {
-        NXLogError("Usage: %s model", argv[0]);
-        return exit;
-    }
-    Assimp::Importer importer;
+    NXArgs args;
 
-    const aiScene* scene = importer.ReadFile( argv[1],
-            aiProcess_Triangulate);
-    if (scene)
+    args.add(kOptionInterleavedBuffers, 'i',"interleaved", "Interleave components as to use a minumum number of buffers possible", 0);
+    args.add(kOptionOutput, 'o', "output", "Output file", kArgFlagRequired | kArgFlagSingleValue);
+
+    int res = args.parse(argc, argv);
+
+    if (res <= 0 || args.isSet(0))
     {
-        logAISceneInfo(scene);
-        if (argc > 2)
-        {
-            NXIOFile* p_file = NXIOFile::open(argv[2], kIOAccessModeWriteBit | kIOAccessModeOverwriteBit);
-            if (p_file)
-            {
-                if(!NXAssimpConverter::convert(scene, p_file, 0))
-                {
-                    NXLogError("Failed to convert model '%s'", argv[1]);
-                }
-                else
-                {
-                    exit = EXIT_SUCCESS;
-                }
-                delete p_file;
-            }
-            else
-            {
-                NXLogError("Failed to open output '%s'", argv[2]);
-            }
-        }
+        args.printHelp("nx3dconverter - Convert 3D Models into the nx3d format.");
+        return (res < 0) ? EXIT_FAILURE : EXIT_SUCCESS;
     }
-    else
+
+    int arg_size = 0;
+    const char* output_file = args.get(kOptionOutput,arg_size)[0];
+
+
+    unsigned int convert_flags = 0;
+
+
+    if (args.isSet(kOptionInterleavedBuffers))
     {
-        NXLogError("Failed to open/load '%s'", argv[1]);
+        convert_flags |= kConverterPackComponentsBit;
     }
-    return exit;
+
+    NXInputStateVec_t input_state;
+
+    if (!NXAssimpConverter::convert(input_state, argv[res], convert_flags))
+    {
+        NXLogError("Failed to open/load '%s'", argv[res]);
+        return EXIT_FAILURE;
+    }
+
+    NX3DModelPostProcess post_process(input_state);
+
+    if (!post_process.buildOutputData())
+    {
+        return EXIT_FAILURE;
+    }
+
+    auto& output_state = post_process.output();
+
+    NX3DModelBuilderHelper helper;
+
+    if (!helper.build(output_state))
+    {
+        return EXIT_FAILURE;
+    }
+
+    if (!helper.write(output_file))
+    {
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
 }

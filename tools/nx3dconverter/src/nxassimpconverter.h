@@ -1,7 +1,7 @@
 //
 // This file is part of the NX Project
 //
-// Copyright (c) 2014 Leander Beernaert
+// Copyright (c) 2015 Leander Beernaert
 //
 // NX Project is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -23,6 +23,8 @@
 #include <assimp/scene.h> // collects data
 #include <assimp/postprocess.h> // various extra operations
 
+#include "nx3dconverter.h"
+
 namespace nx
 {
 class NXIOBase;
@@ -30,8 +32,7 @@ enum ConverterBit
 {
     kConverterPackComponentsBit = NX_BIT(0),
     kConverterExcludeBonesBit = NX_BIT(1),
-    kConverterExcludeAnimationsBit = NX_BIT(2),
-    kConverterForceSeparateBit = NX_BIT(3)
+    kConverterExcludeAnimationsBit = NX_BIT(2)
 };
 
 
@@ -39,9 +40,10 @@ class NXAssimpConverter
 {
 public:
 
-    static bool convert(const aiScene* pScene,
-                        NXIOBase* pIO,
+    static bool convert(NXInputStateVec_t& output,
+                        const char* file,
                         const nx_u32 flags);
+
 
 private:
 

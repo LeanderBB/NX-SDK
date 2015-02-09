@@ -88,6 +88,7 @@ set(PROJ_IDL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/idl)
 
 set(PROJ_IDL
     nxgpuprogramsource
+    nx3dmodel
 )
 
 
@@ -171,6 +172,8 @@ set(PROJ_HDR
     nx/gpu/nxgputexture.h
     nx/gpu/nxgpubuffer.h
     nx/gpu/nxgpushaderinput.h
+    nx/gpu/nxgpumesh.h
+    nx/gpu/nxgpusubmesh.h
     nx/media/nximage.h
     nx/media/nx3dmodel.h
     nx/math/nx3dmath.h
@@ -187,6 +190,7 @@ set(PROJ_HDR
     nx/resource/nxgputextureresource.h
     nx/resource/nx3dmodelresource.h
     nx/resource/nxgpuprogramresource.h
+    nx/resource/nxgpumeshresource.h
 )
 
 
@@ -243,6 +247,8 @@ set(PROJ_SRC
     nx/gpu/nxgpubuffer.cpp
     nx/gpu/nxgpubuffermanagersimple.cpp
     nx/gpu/nxgpushaderinput.cpp
+    nx/gpu/nxgpumesh.cpp
+    nx/gpu/nxgpusubmesh.cpp
     nx/media/nximage.cpp
     nx/media/nx3dmodel.cpp
     nx/math/nxtransform.cpp
@@ -256,6 +262,7 @@ set(PROJ_SRC
     nx/resource/nxgputextureresource.cpp
     nx/resource/nx3dmodelresource.cpp
     nx/resource/nxgpuprogramresource.cpp
+    nx/resource/nxgpumeshresource.cpp
 )
 
 if(ANDROID)
@@ -266,7 +273,7 @@ add_library(${PROJ_NAME} STATIC  ${PROJ_HDR} ${PROJ_SRC})
 add_dependencies(${PROJ_NAME} YAAF glm)
 
 # compile idls`
-NX_COMPILE_FLATBUFFER_IDL(${PROJ_NAME} ${CMAKE_CURRENT_BINARY_DIR}/genidl ${CMAKE_CURRENT_SOURCE_DIR}/idl ${PROJ_IDL})
+NX_COMPILE_FLATBUFFER_IDL(${PROJ_NAME} ${CMAKE_CURRENT_BINARY_DIR}/genidl ${CMAKE_CURRENT_SOURCE_DIR}/idl PROJ_IDL)
 
 # generate cmake config file
 configure_file("cmake/nxconfig.cmake.in" "${NX_CONFIG_FILE_CMAKE}")

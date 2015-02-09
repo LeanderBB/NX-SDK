@@ -1,7 +1,7 @@
 //
 // This file is part of the NX Project
 //
-// Copyright (c) 2014 Leander Beernaert
+// Copyright (c) 2015 Leander Beernaert
 //
 // NX Project is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -25,359 +25,182 @@
 namespace nx
 {
 
+static void logAISceneInfo(const aiScene* pScene)
+{
+
+    NXLog(" # Meshes    : %d", pScene->mNumMeshes);
+    NXLog(" # Animations: %d", pScene->mNumAnimations);
+    NXLog(" # Materials : %d", pScene->mNumMaterials);
+    NXLog(" # Textures  : %d", pScene->mNumTextures);
+    NXLog(" # Lights    : %d", pScene->mNumLights);
+    NXLog(" # Cameras   : %d", pScene->mNumCameras);
+
+    NXLog("");
+
+    for (unsigned int i = 0; i < pScene->mNumMeshes; ++i)
+    {
+        NXLog("  Mesh (%d)", i);
+        const aiMesh* mesh= pScene->mMeshes[i];
+        NXLog("    # Vertices       : %d", mesh->mNumVertices);
+        NXLog("    # Faces          : %d", mesh->mNumFaces);
+        NXLog("    # Bones          : %d", mesh->mNumBones);
+        NXLog("    # Color Channels : %d", mesh->GetNumColorChannels());
+        NXLog("    # UV Components  : %d", mesh->GetNumUVChannels());
+        NXLog("    # Anim Meshes    : %d", mesh->mNumAnimMeshes);
+    }
+
+    for (unsigned int i = 0; i < pScene->mNumAnimations; ++i)
+    {
+        NXLog("  Anim (%d)", i);
+        const aiAnimation* anim= pScene->mAnimations[i];
+        NXLog("    Name            : %d", anim->mName.C_Str());
+        NXLog("    Duration        : %f", anim->mDuration);
+        NXLog("    # Channes       : %d", anim->mNumChannels);
+        NXLog("    # Mesh Channels : %d", anim->mNumMeshChannels);
+
+        for (unsigned int j = 0; j < anim->mNumChannels; ++j)
+        {
+            NXLog("    Channel (%d)", j );
+            const aiNodeAnim *channel = anim->mChannels[j];
+            NXLog("      Name            : %d", channel->mNodeName.C_Str());
+            NXLog("      # Position Keys : %d", channel->mNumPositionKeys);
+            NXLog("      # Rotation Keys : %d", channel->mNumRotationKeys);
+            NXLog("      # Scaling Keys  : %d", channel->mNumScalingKeys);
+        }
+
+        for (unsigned int j = 0; j < anim->mNumMeshChannels; ++j)
+        {
+            NXLog("    Mesh Channel (%d)", j );
+            const aiMeshAnim* manim = anim->mMeshChannels[j];
+            NXLog("      Name   : %d", manim->mName.C_Str());
+            NXLog("      # Keys : %d", manim->mNumKeys);
+        }
+    }
+}
+
 
 bool
-NXAssimpConverter::convert(const aiScene* pScene,
-                           NXIOBase* pIO,
+NXAssimpConverter::convert(NXInputStateVec_t& output,
+                           const char* file,
                            const nx_u32 flags)
 {
 
     (void) flags;
-    (void) *pIO;
+    unsigned int aiflags = aiProcessPreset_TargetRealtime_Quality | aiProcess_CalcTangentSpace;
 
-    float* p_vertices = nullptr;
-    float* p_normals = nullptr;
-    float* p_uv0=nullptr;
-    float* p_tangents = nullptr;
-    float* p_binormal = nullptr;
-    float* p_color = nullptr;
-    std::vector<unsigned int> idx;
-
-    size_t bytes_written = 0;
-
-    NX3DModelHeader hdr;
-    NX3DModelEntry model_entry;
-    memset(&hdr, 0, sizeof(hdr));
-
-    //TODO: Update
-    hdr.drawmode = kGPUDrawModeTriangles;
-
-    bool result = false;
-    const aiMesh* p_mesh = pScene->mMeshes[0];
-
-    if (p_mesh->HasPositions())
+    Assimp::Importer importer;
+    const aiScene* pScene = importer.ReadFile(file, aiflags);
+    if (!pScene)
     {
-        p_vertices = (float*) NXMalloc(sizeof(float) * 3  * p_mesh->mNumVertices);
-
-        for (unsigned int i = 0; i < p_mesh->mNumVertices; ++i)
-        {
-            const aiVector3D* p_vec  = &(p_mesh->mVertices[i]);
-            p_vertices[i * 3] = p_vec->x;
-            p_vertices[i * 3 + 1] = p_vec->y;
-            p_vertices[i * 3 + 2] = p_vec->z;
-        }
-
-        hdr.nEntries++;
-        hdr.components |= kModelComponentVerticesBit;
-        hdr.nVertices = p_mesh->mNumVertices;
-        hdr.drawSize = p_mesh->mNumVertices;
-    }
-    else
-    {
-        NXLogError("Model does not have vertices");
         return false;
     }
 
-    if (p_mesh->HasNormals())
+    logAISceneInfo(pScene);
+    output.resize(pScene->mNumMeshes);
+    for (unsigned int m = 0; m < pScene->mNumMeshes; ++m)
     {
-        p_normals = (float*) NXMalloc(sizeof(float) * 3  * p_mesh->mNumVertices);
-
-        for (unsigned int i = 0; i < p_mesh->mNumVertices; ++i)
+        const aiMesh* p_mesh = pScene->mMeshes[m];
+        NXInputState& cur_state = output[m];
+        if (p_mesh->HasPositions())
         {
-            const aiVector3D* p_vec  = &(p_mesh->mNormals[i]);
-            p_normals[i * 3] = p_vec->x;
-            p_normals[i * 3 + 1] = p_vec->y;
-            p_normals[i * 3 + 2] = p_vec->z;
-        }
-        hdr.nEntries++;
-        hdr.components |= kModelComponentNormalsBit;
-    }
-
-
-    if (p_mesh->HasTextureCoords(0))
-    {
-        p_uv0 = (float*) NXMalloc(sizeof(float) * 2  * p_mesh->mNumVertices);
-
-        for (unsigned int i = 0; i < p_mesh->mNumVertices; ++i)
-        {
-            const aiVector3D* p_vec  = &(p_mesh->mNormals[i]);
-            p_uv0[i * 2] = p_vec->x;
-            p_uv0[i * 2 + 1] = p_vec->y;
-        }
-
-        hdr.nEntries++;
-        hdr.components |= kModelComponentUVBit;
-    }
-
-    if (p_mesh->HasTangentsAndBitangents())
-    {
-        p_tangents = (float*) NXMalloc(sizeof(float) * 3  * p_mesh->mNumVertices);
-
-        for (unsigned int i = 0; i < p_mesh->mNumVertices; ++i)
-        {
-            const aiVector3D* p_vec  = &(p_mesh->mTangents[i]);
-            p_tangents[i * 3] = p_vec->x;
-            p_tangents[i * 3 + 1] = p_vec->y;
-            p_tangents[i * 3 + 2] = p_vec->z;
-        }
-
-        p_binormal = (float*) NXMalloc(sizeof(float) * 3  * p_mesh->mNumVertices);
-
-        for (unsigned int i = 0; i < p_mesh->mNumVertices; ++i)
-        {
-            const aiVector3D* p_vec  = &(p_mesh->mBitangents[i]);
-            p_binormal[i * 3] = p_vec->x;
-            p_binormal[i * 3 + 1] = p_vec->y;
-            p_binormal[i * 3 + 2] = p_vec->z;
-        }
-        hdr.nEntries += 2;
-        hdr.components |= kModelComponentBinormalBit | kModelComponentTangentBit;
-    }
-
-    if (p_mesh->HasFaces())
-    {
-        for(unsigned int i = 0; i < p_mesh->mNumFaces; ++i)
-        {
-            const aiFace* p_face = &p_mesh->mFaces[i];
-            if (p_face->mNumIndices == 3)
+            cur_state.vertices.resize(3  * p_mesh->mNumVertices, 0.0f);
+            for (unsigned int i = 0; i < p_mesh->mNumVertices; ++i)
             {
-                idx.push_back(p_face->mIndices[0]);
-                idx.push_back(p_face->mIndices[1]);
-                idx.push_back(p_face->mIndices[2]);
+                const aiVector3D* p_vec  = &(p_mesh->mVertices[i]);
+                cur_state.vertices[i * 3] = p_vec->x;
+                cur_state.vertices[i * 3 + 1] = p_vec->y;
+                cur_state.vertices[i * 3 + 2] = p_vec->z;
             }
-            else
+        }
+        else
+        {
+            NXLogError("Model (%d) does not have vertices", m);
+            return false;
+        }
+
+        if (p_mesh->HasNormals())
+        {
+            cur_state.normals.resize(3  * p_mesh->mNumVertices, 0.0f);
+            for (unsigned int i = 0; i < p_mesh->mNumVertices; ++i)
             {
-                NXLogError("Face has more than 3 indices!!");
-                idx.clear();
-                goto error_exit;
+                const aiVector3D* p_vec  = &(p_mesh->mNormals[i]);
+                cur_state.normals[i * 3] = p_vec->x;
+                cur_state.normals[i * 3 + 1] = p_vec->y;
+                cur_state.normals[i * 3 + 2] = p_vec->z;
             }
         }
 
-        hdr.nEntries++;
-        hdr.components |= kModelComponentIdxBit;
-        hdr.drawSize = p_mesh->mNumFaces;
-    }
 
-
-    memcpy(hdr.id, NX3DModel::sIdentifier, sizeof(NX3DModel::sIdentifier));
-    hdr.version = 1;
-
-    bytes_written = pIO->write(&hdr, sizeof(hdr));
-    if(bytes_written != sizeof(hdr))
-    {
-        NXLogError("Failed to write NX3DModel Header");
-        goto error_exit;
-    }
-
-
-    // write vertices
-    if (p_vertices)
-    {
-        model_entry.idx = 0;
-        model_entry.components = kModelComponentVerticesBit;
-        model_entry.format = kGPUBufferLayout3FLT;
-        strncpy(model_entry.name,"vertices", 31);
-        model_entry.size = sizeof(float) * 3 * hdr.nVertices;
-
-        bytes_written = pIO->write(&model_entry, sizeof(model_entry));
-        if (bytes_written != sizeof(model_entry))
+        if (p_mesh->HasTextureCoords(0))
         {
-            NXLogError("Failed to write NX3DModel Entry for %s", model_entry.name);
-            goto error_exit;
+            cur_state.texcoord0.resize(2  * p_mesh->mNumVertices, 0.0f);
+
+            for (unsigned int i = 0; i < p_mesh->mNumVertices; ++i)
+            {
+                const aiVector3D* p_vec  = &(p_mesh->mNormals[i]);
+                cur_state.texcoord0[i * 2] = p_vec->x;
+                cur_state.texcoord0[i * 2 + 1] = p_vec->y;
+            }
         }
 
-        bytes_written = pIO->write(p_vertices, model_entry.size);
-        if (bytes_written != model_entry.size)
+        if (p_mesh->HasTextureCoords(1))
         {
-            NXLogError("Failed to write NX3DModel content for %s", model_entry.name);
-            goto error_exit;
+            cur_state.texcoord1.resize(2  * p_mesh->mNumVertices, 0.0f);
+
+            for (unsigned int i = 0; i < p_mesh->mNumVertices; ++i)
+            {
+                const aiVector3D* p_vec  = &(p_mesh->mNormals[i]);
+                cur_state.texcoord1[i * 2] = p_vec->x;
+                cur_state.texcoord1[i * 2 + 1] = p_vec->y;
+            }
         }
 
-    }
-
-    // write normals
-    if (p_normals)
-    {
-        model_entry.idx = 1;
-        model_entry.components = kModelComponentNormalsBit;
-        model_entry.format = kGPUBufferLayout3FLT;
-        strncpy(model_entry.name,"normals", 31);
-        model_entry.size = sizeof(float) * 3 * hdr.nVertices;
-
-        bytes_written = pIO->write(&model_entry, sizeof(model_entry));
-        if (bytes_written != sizeof(model_entry))
+        if (p_mesh->HasTangentsAndBitangents())
         {
-            NXLogError("Failed to write NX3DModel Entry for %s", model_entry.name);
-            goto error_exit;
+             cur_state.tangents.resize(3  * p_mesh->mNumVertices, 0.0f);
+
+            for (unsigned int i = 0; i < p_mesh->mNumVertices; ++i)
+            {
+                const aiVector3D* p_vec  = &(p_mesh->mTangents[i]);
+                cur_state.tangents[i * 3] = p_vec->x;
+                cur_state.tangents[i * 3 + 1] = p_vec->y;
+                cur_state.tangents[i * 3 + 2] = p_vec->z;
+            }
+
+            cur_state.binormal.resize(3  * p_mesh->mNumVertices, 0.0f);
+
+            for (unsigned int i = 0; i < p_mesh->mNumVertices; ++i)
+            {
+                const aiVector3D* p_vec  = &(p_mesh->mBitangents[i]);
+                cur_state.binormal[i * 3] = p_vec->x;
+                cur_state.binormal[i * 3 + 1] = p_vec->y;
+                cur_state.binormal[i * 3 + 2] = p_vec->z;
+            }
         }
 
-        bytes_written = pIO->write(p_normals, model_entry.size);
-        if (bytes_written != model_entry.size)
+        if (p_mesh->HasFaces())
         {
-            NXLogError("Failed to write NX3DModel content for %s", model_entry.name);;
-            goto error_exit;
-        }
 
-    }
-
-    // write UV
-    if (p_uv0)
-    {
-        model_entry.idx = 2;
-        model_entry.components = kModelComponentNormalsBit;
-        model_entry.format = kGPUBufferLayout2FLT;
-        strncpy(model_entry.name,"uv 0", 31);
-        model_entry.size = sizeof(float) * 2 * hdr.nVertices;
-
-        bytes_written = pIO->write(&model_entry, sizeof(model_entry));
-        if (bytes_written != sizeof(model_entry))
-        {
-            NXLogError("Failed to write NX3DModel Entry for %s", model_entry.name);
-            goto error_exit;
-        }
-
-        bytes_written = pIO->write(p_uv0, model_entry.size);
-        if (bytes_written != model_entry.size)
-        {
-            NXLogError("Failed to write NX3DModel content for %s", model_entry.name);;
-            goto error_exit;
+            cur_state.indices.reserve(p_mesh->mNumFaces);
+            for(unsigned int i = 0; i < p_mesh->mNumFaces; ++i)
+            {
+                const aiFace* p_face = &p_mesh->mFaces[i];
+                if (p_face->mNumIndices == 3)
+                {
+                    cur_state.indices.push_back(p_face->mIndices[0]);
+                    cur_state.indices.push_back(p_face->mIndices[1]);
+                    cur_state.indices.push_back(p_face->mIndices[2]);
+                }
+                else
+                {
+                    NXLogError("Face (%d) has more than 3 indices", m);
+                    return false;
+                }
+            }
         }
 
     }
-
-    // write tangents
-    if (p_tangents)
-    {
-        model_entry.idx = 3;
-        model_entry.components = kModelComponentTangentBit;
-        model_entry.format = kGPUBufferLayout3FLT;
-        strncpy(model_entry.name,"tangents", 31);
-        model_entry.size = sizeof(float) * 3 * hdr.nVertices;
-
-        bytes_written = pIO->write(&model_entry, sizeof(model_entry));
-        if (bytes_written != sizeof(model_entry))
-        {
-            NXLogError("Failed to write NX3DModel Entry for %s", model_entry.name);
-            goto error_exit;
-        }
-
-        bytes_written = pIO->write(p_tangents, model_entry.size);
-        if (bytes_written != model_entry.size)
-        {
-            NXLogError("Failed to write NX3DModel content for %s", model_entry.name);;
-            goto error_exit;
-        }
-    }
-
-
-    // write binormals
-    if (p_binormal)
-    {
-        model_entry.idx = 4;
-        model_entry.components = kModelComponentTangentBit;
-        model_entry.format = kGPUBufferLayout3FLT;
-        strncpy(model_entry.name,"binormals", 31);
-        model_entry.size = sizeof(float) * 3 * hdr.nVertices;
-
-        bytes_written = pIO->write(&model_entry, sizeof(model_entry));
-        if (bytes_written != sizeof(model_entry))
-        {
-            NXLogError("Failed to write NX3DModel Entry for %s", model_entry.name);
-            goto error_exit;
-        }
-
-        bytes_written = pIO->write(p_binormal, model_entry.size);
-        if (bytes_written != model_entry.size)
-        {
-            NXLogError("Failed to write NX3DModel content for %s", model_entry.name);;
-            goto error_exit;
-        }
-    }
-
-    // write color
-    if (p_color)
-    {
-        model_entry.idx = 5;
-        model_entry.components = kModelComponentColorBit;
-        model_entry.format = kGPUBufferLayout3FLT;
-        strncpy(model_entry.name,"color", 31);
-        model_entry.size = sizeof(float) * 4 * hdr.nVertices;
-
-        bytes_written = pIO->write(&model_entry, sizeof(model_entry));
-        if (bytes_written != sizeof(model_entry))
-        {
-            NXLogError("Failed to write NX3DModel Entry for %s", model_entry.name);
-            goto error_exit;
-        }
-
-        bytes_written = pIO->write(p_color, model_entry.size);
-        if (bytes_written != model_entry.size)
-        {
-            NXLogError("Failed to write NX3DModel content for %s", model_entry.name);;
-            goto error_exit;
-        }
-    }
-
-    // write idx
-    if (idx.size())
-    {
-        model_entry.idx = NX_U32_MAX;
-        model_entry.components = kModelComponentIdxBit;
-        model_entry.format = kGPUBufferLayout1UI;
-        strncpy(model_entry.name,"indicies", 31);
-        model_entry.size = sizeof(unsigned int) * idx.size();
-
-        bytes_written = pIO->write(&model_entry, sizeof(model_entry));
-        if (bytes_written != sizeof(model_entry))
-        {
-            NXLogError("Failed to write NX3DModel Entry for %s", model_entry.name);
-            goto error_exit;
-        }
-
-        bytes_written = pIO->write(&idx[0], model_entry.size);
-        if (bytes_written != model_entry.size)
-        {
-            NXLogError("Failed to write NX3DModel content for %s", model_entry.name);;
-            goto error_exit;
-        }
-    }
-
-
-    result = true;
-
-error_exit:
-    // free data
-
-    if (p_vertices)
-    {
-        NXFree(p_vertices);
-    }
-
-    if (p_normals)
-    {
-        NXFree(p_normals);
-    }
-
-    if (p_uv0)
-    {
-        NXFree(p_uv0);
-    }
-
-    if (p_tangents)
-    {
-        NXFree(p_tangents);
-    }
-
-    if (p_binormal)
-    {
-        NXFree(p_binormal);
-    }
-
-    if (p_color)
-    {
-        NXFree(p_color);
-    }
-    return result;
+return true;
 }
 
 

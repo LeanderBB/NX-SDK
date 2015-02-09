@@ -73,14 +73,14 @@ endif()
 macro(NX_COMPILE_FLATBUFFER_IDL TARGET OUTPUT_DIR INPUT_DIR FILES)
     include_directories(${OUTPUT_DIR})
     set(${TARGET}_generated_files)
-    foreach(FILE ${FILES})
+    foreach(FILE ${${FILES}})
         add_custom_command(
             OUTPUT ${OUTPUT_DIR}/${FILE}_generated.h
             COMMAND ${NX_FLATBUFFERS_COMPILER} -c -o ${OUTPUT_DIR} ${INPUT_DIR}/${FILE}.idl
             DEPENDS ${INPUT_DIR}/${FILE}.idl FlatBuffers
             COMMENT "Compiling IDL ${INPUT_DIR}/${FILE}.idl"
         )
-    set(${TARGET}_generated_files ${${TARGET}_generated_files} ${OUTPUT_DIR}/${FILE}_generated.h)
+        set(${TARGET}_generated_files ${${TARGET}_generated_files} ${OUTPUT_DIR}/${FILE}_generated.h)
     endforeach()
     add_custom_target(${PROJ_NAME}_idl DEPENDS ${${TARGET}_generated_files})
     set_source_files_properties(${OUTPUT_DIR}/${FILE}_generated.h PROPERTIES GENERATED 1)

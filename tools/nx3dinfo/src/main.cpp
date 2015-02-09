@@ -44,7 +44,6 @@ NX3DModelLogInfo(const char* input)
     else
     {
         p_model->logInfo();
-        p_model->unload();
         delete p_model;
     }
 }

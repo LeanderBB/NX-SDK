@@ -61,7 +61,8 @@ NXArgs::parse(const int argc,
     Option* p_cur_option = nullptr;
     int n_options = 0;
     int n_options_req = 0;
-    for (int i = 1; i < argc;)
+    int i;
+    for (i = 1; i < argc;)
     {
         size_t len = strlen(argv[i]);
 
@@ -72,6 +73,12 @@ NXArgs::parse(const int argc,
         }
 
 
+        if (len == 2 && strcmp(argv[i], "--") == 0)
+        {
+            // end of control options
+            ++i;
+            break;
+        }
 
         if (p_cur_option)
         {
@@ -165,7 +172,7 @@ NXArgs::parse(const int argc,
     _nParsedOptions = n_options;
     if (n_options_req == _nRequiredOptions)
     {
-        return n_options;
+        return i;
     }
     else
     {

@@ -45,10 +45,11 @@ int main(const int argc,
     int res = args.parse(argc, argv);
     if (res < 0)
     {
+        args.printHelp("NXArgs test program.\nSimple test to check whether the arg parser works.");
         return EXIT_FAILURE;
     }
 
-    if (res == 0 || args.isSet(kOptionHelp))
+    if (args.isSet(kOptionHelp))
     {
         args.printHelp("NXArgs test program.\nSimple test to check whether the arg parser works.");
         return EXIT_SUCCESS;
@@ -91,6 +92,7 @@ int main(const int argc,
             std::cout <<"    - " << values[i] << std::endl;
         }
     }
+    std::cout << "Next Arg index: " << res << std::endl;
     std::cout << std::endl;
 
     return EXIT_SUCCESS;

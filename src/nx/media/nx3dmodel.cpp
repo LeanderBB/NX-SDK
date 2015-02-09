@@ -19,165 +19,277 @@
 #include "nx/nxcore.h"
 #include "nx/media/nx3dmodel.h"
 #include "nx/io/nxiobase.h"
+#include "nx/gpu/nxgpushaderinput.h"
+#include "nx3dmodel_generated.h"
+
 namespace nx
 {
 
-const nx_u8 NX3DModel::sIdentifier[12] =
-    {0xAB, 'N', 'X', '3', 'D', 'M', 'D', 'L', 0xBB, 0x0A, 0x1A, 0x0A };
+NX3DModelMesh::NX3DModelMesh(const idlMesh* pMesh):
+    _pMesh(pMesh)
+{
+    NX_ASSERT(pMesh);
+}
+
+nx_u32
+NX3DModelMesh::vertexCount() const
+{
+    return _pMesh->vertCount();
+}
+
+nx_u32
+NX3DModelMesh::indexCount() const
+{
+    return _pMesh->indexCount();
+}
+
+GPUDrawMode
+NX3DModelMesh::drawMode() const
+{
+    return static_cast<GPUDrawMode>(_pMesh->drawMode());
+}
+
+nx_u32
+NX3DModelMesh::numDataBuffers() const
+{
+    return _pMesh->localBuffers()->size();
+}
+
+bool
+NX3DModelMesh::hasIndexBuffer() const
+{
+    return _pMesh->indexCount() != 0;
+}
+
+nx_u32
+NX3DModelMesh::indexBufferOffset() const
+{
+    return _pMesh->localIdxBuffer()->offset();
+}
+
+bool
+NX3DModelMesh::dataBufferInfo(const nx_u32 idx,
+                              nx_u32& meshBufferIdx,
+                              nx_u32& offset) const
+{
+    if (idx < numDataBuffers())
+    {
+        auto buf = _pMesh->localBuffers()->Get(idx);
+        meshBufferIdx =  buf->bind_idx();
+        offset = buf->offset();
+        return true;
+    }
+    return false;
+}
+
+nx_u32
+NX3DModelMesh::numShaderInputs() const
+{
+    return _pMesh->input()->size();
+}
+
+bool
+NX3DModelMesh::fillShaderInputdesc(const nx_u32 idx,
+                                   NXGPUShaderInputDesc& desc) const
+{
+    if (idx < numShaderInputs())
+    {
+        const idlShaderInput* input = _pMesh->input()->Get(idx);
+
+        desc.binding_idx = input->bind_idx();
+        desc.data_count = input->data_count();
+        desc.data_idx = input->data_idx();
+        desc.data_offset = input->data_offset();
+        desc.data_type = input->data_type();
+        desc.enabled = 1;
+        return true;
+    }
+    return false;
+}
 
 
 NX3DModel*
 NX3DModel::load(NXIOBase* pIO)
 {
-    NX3DModelHeader hdr;
+    size_t file_size = pIO->size();
 
-    if (pIO->read(&hdr, sizeof(hdr)) != sizeof(hdr))
+    if (!file_size)
     {
-        NXLogError("3DModel: Failed to read header");
+        NXLogError("NX3DModel::load: Invalid IO, need to know file size");
         return nullptr;
     }
 
-    if (memcmp(&hdr.id, NX3DModel::sIdentifier, sizeof(NX3DModel::sIdentifier)) != 0)
+    void* ptr = NXMalloc(file_size);
+
+    if (pIO->read(ptr, file_size) != file_size)
     {
-        NXLogError("3DModel: Input is not a 3DModel file");
+        NXLogError("NX3DModel::load: Failed to read into memory");
+        NXFree(ptr);
+        return nullptr;
+    }
+    flatbuffers::Verifier verifier(static_cast<const uint8_t*>(ptr), file_size);
+    if (!VerifyidlModelBuffer(verifier))
+    {
+        NXLogError("NX3DModel::load: Invalid 3dmodel format");
+        NXFree(ptr);
         return nullptr;
     }
 
-    size_t buffer_size = pIO->size() - pIO->tell();
-    void* p_buffer = NXMalloc(buffer_size);
-
-    if (pIO->read(p_buffer, buffer_size) != buffer_size)
-    {
-        NXLogError("3DModel: Failed to read contents into memory");
-        NXFree(p_buffer);
-        return nullptr;
-    }
-
-    NX3DModel* p_model = new NX3DModel(hdr, p_buffer, buffer_size);
-
-    p_model->init();
-
-    return p_model;
+    return  new NX3DModel(ptr, file_size);
 }
 
 NX3DModel::~NX3DModel()
 {
     unload();
-    NX_ASSERT(_pContent == nullptr);
-}
-
-
-const NX3DModelHeader&
-NX3DModel::header() const
-{
-    return _hdr;
-}
-
-const NX3DModel::ModelEntry*
-NX3DModel::entry(const unsigned idx) const
-{
-    return (idx < _entries.size()) ? &_entries[idx] : nullptr;
-}
-
-
-const NX3DModel::ModelEntry*
-NX3DModel::indices() const
-{
-    return (_indices.ptr) ? &_indices : nullptr;
+    NX_ASSERT(_pData == nullptr);
 }
 
 void
 NX3DModel::logInfo() const
 {
+    size_t index_buffer_size = _pModel->globalIdxBuffer()->data()->size();
     NXLog("NX3DModel:");
-    NXLog("  Version    : %d", _hdr.version);
-    NXLog("  Compoments : %x", _hdr.components);
-    NXLog("   > Vertices : %d", (_hdr.components & kModelComponentVerticesBit) ? 1 : 0);
-    NXLog("   > Normals  : %d", (_hdr.components & kModelComponentNormalsBit) ? 1 : 0);
-    NXLog("   > UV (0)   : %d", (_hdr.components & kModelComponentUVBit) ? 1 : 0);
-    NXLog("   > Tangents : %d", (_hdr.components & kModelComponentTangentBit) ? 1 : 0);
-    NXLog("   > Binormal : %d", (_hdr.components & kModelComponentBinormalBit) ? 1 : 0);
-    NXLog("   > Color    : %d", (_hdr.components & kModelComponentColorBit) ? 1 : 0);
-    NXLog("   > Indices  : %d", (_hdr.components & kModelComponentIdxBit) ? 1 : 0);
-    NXLog("  nEntries   : %d", _hdr.nEntries);
-    NXLog("  nVertices  : %d", _hdr.nVertices);
-
-    for (nx_u32 i = 0; i < _entries.size(); ++i)
+    NXLog("  Num Meshes             : %u", (nx_u32)_pModel->meshes()->size());
+    NXLog("  Num Buffers            : %u", (nx_u32)_pModel->globalBuffers()->size());
+    NXLog("  Idx Buffer             : %s", index_buffer_size ? "yes" : "no");
+    if (index_buffer_size)
     {
-        const NX3DModelEntry& entry = _entries[i].entry;
-        NXLog("  Entry (%d)", i);
-        NXLog("    IDX             : %u", entry.idx);
-        NXLog("    Name            : %s", entry.name);
-        NXLog("    GPUBufferFormat : %x", entry.format);
-        NXLog("    Components      : %x", entry.components);
-        NXLog("    Size            : %d", entry.size);
+        NXLog("  Idx Buffer Size        : %u", index_buffer_size);
+    }
+    auto global_buffers = _pModel->globalBuffers();
+
+
+    for(size_t i = 0; i < global_buffers->size(); ++i)
+    {
+        auto global_buffer = global_buffers->Get(i);
+        NXLog("  Buffer (%u):", i);
+        NXLog("    bind_idx             : %x", global_buffer->bind_idx());
+        NXLog("    size                 : %u", global_buffer->data()->size());
     }
 
-    if (_indices.ptr)
-    {
-        const NX3DModelEntry& entry = _indices.entry;
-        NXLog("  Entry (-)");
-        NXLog("    Name            : %s", entry.name);
-        NXLog("    GPUBufferFormat : %x", entry.format);
-        NXLog("    Components      : %x", entry.components);
-        NXLog("    Size            : %d", entry.size);
-    }
 
+    auto meshes = _pModel->meshes();
+
+    for (size_t i = 0; i < meshes->size(); ++i)
+    {
+        auto mesh = meshes->Get(i);
+
+        NXLog("  Mesh (%u):", i);
+        NXLog("    Draw Mode            : %x", mesh->drawMode());
+        NXLog("    Num Vertices         : %u", mesh->vertCount());
+        NXLog("    Num Indices          : %u", mesh->indexCount());
+        auto idxBuffer = mesh->localIdxBuffer();
+        NXLog("    Index Buffer (offset): %u", idxBuffer->offset());
+
+        auto buffers = mesh->localBuffers();
+        for (size_t j = 0; j < buffers->size(); ++j)
+        {
+            auto buffer = buffers->Get(j);
+            NXLog("    Vert. Buffer (id:off): %u:%u", buffer->bind_idx(), buffer->offset());
+        }
+
+        auto shaderInput = mesh->input();
+
+        for (size_t j = 0; j < shaderInput->size(); ++j)
+        {
+            auto cur_input = shaderInput->Get(j);
+            NXLog("    Shader Input (%u):", j);
+            NXLog("      bind_idx           : %u", cur_input->bind_idx());
+            NXLog("      data_type          : %u", cur_input->data_type());
+            NXLog("      data_idx           : %u", cur_input->data_idx());
+            NXLog("      data_count         : %u", cur_input->data_count());
+            NXLog("      data_offset        : %u", cur_input->data_offset());
+        }
+
+    }
 }
 
 void
 NX3DModel::unload()
 {
-    if (_pContent)
+    if (_pData)
     {
-        NXFree((void*)_pContent);
-        _pContent = nullptr;
-        _contentSize = 0;
+        NXFree((void*)_pData);
+        _pData = nullptr;
+        _pModel = nullptr;
     }
 }
 
-NX3DModel::NX3DModel(const NX3DModelHeader& hdr,
-                     const void* pBuffer,
+NX3DModel::NX3DModel(const void* pBuffer,
                      const size_t size):
-    _hdr(hdr),
-    _entries(),
-    _pContent(static_cast<const char*>(pBuffer)),
-    _contentSize(size)
+    _pData(pBuffer),
+    _dataSize(size),
+    _pModel(GetidlModel(pBuffer))
 {
+    size_t num_meshes = _pModel->meshes()->size();
+    _meshes.reserve(num_meshes);
 
+    for (size_t i = 0; i < num_meshes; ++i)
+    {
+        _meshes.push_back(NX3DModelMesh(_pModel->meshes()->Get(i)));
+    }
 }
 
 void
-NX3DModel::init()
+NX3DModel::getIndexBuffer(const void*& ptr,
+                          nx_u32& size) const
 {
-    size_t offset = 0;
-    _entries.reserve(_hdr.nEntries);
-
-    for (nx_u32 i = 0; i < _hdr.nEntries; ++i)
+    auto global_idx = _pModel->globalIdxBuffer()->data();
+    if (global_idx->size())
     {
-        const NX3DModelEntry* p_entry = reinterpret_cast<const NX3DModelEntry*>(_pContent + offset);
+        ptr = global_idx->Data();
+        size = global_idx->size();
+    }
+    else
+    {
+        ptr = nullptr;
+        size = 0;
+    }
+}
 
-        if (p_entry->idx == NX_U32_MAX)
-        {
-            _indices.entry = *p_entry;
-            _indices.ptr = _pContent + offset + sizeof(NX3DModelEntry);
-        }
-        else
-        {
-            ModelEntry new_entry;
-            new_entry.entry = *p_entry;
-            new_entry.ptr = _pContent + offset + sizeof(NX3DModelEntry);
-            _entries.push_back(new_entry);
-        }
-
-        offset += sizeof(NX3DModelEntry) + p_entry->size;
+void
+NX3DModel::getDataBuffer(const void*& ptr,
+                         nx_u32& size,
+                         nx_u32& bindIdx,
+                         const nx_u32 idx) const
+{
+    if (idx < _pModel->globalBuffers()->size())
+    {
+        const idlBuffer* buffer = _pModel->globalBuffers()->Get(idx);
+        ptr = buffer->data()->Data();
+        size = buffer->data()->size();
+        bindIdx = buffer->bind_idx();
+    }
+    else
+    {
+        ptr = nullptr;
+        bindIdx = NX_U32_MAX;
+        size = 0;
     }
 }
 
 size_t
 NX3DModel::memorySize() const
 {
-    return sizeof(NX3DModel) + (sizeof(NX3DModelEntry) * _entries.size()) + _contentSize;
+    return sizeof(NX3DModel) + _dataSize + (sizeof(NX3DModelMesh) * _meshes.capacity());
+}
+
+nx_u32
+NX3DModel::numDataBuffers() const
+{
+    return _pModel->globalBuffers()->size();
+}
+
+nx_u32
+NX3DModel::numSubMeshes() const
+{
+    return _pModel->meshes()->size();
+}
+
+const NX3DModelMesh*
+NX3DModel::subMesh(const nx_u32 idx) const
+{
+    return (idx < _meshes.size()) ? &_meshes[idx] : nullptr;
 }
 
 }

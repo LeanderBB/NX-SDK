@@ -59,21 +59,23 @@ NXGPUTextureResource::load(NXResourceManager& resourceManager)
     NXGPUInterface* gpuInterface = resourceManager.gpuInterface();
     setState(kResourceStateLoading);
 
+    NXImageResourcePtr_t img_ptr;
+
     if(!_imgHdl.valid())
     {
         _imgHdl = resourceManager.getByName(image_name.c_str());
-        _imgPtr = resourceManager.get(_imgHdl);
+        img_ptr = resourceManager.get(_imgHdl);
     }
 
-    if (!_imgPtr)
+    if (!img_ptr)
     {
-        _imgPtr = nxMakeTLShared<NXImageResource>(image_name.c_str(),
+        img_ptr = nxMakeTLShared<NXImageResource>(image_name.c_str(),
                                                   path(), true);
-        _imgHdl = resourceManager.registerResource(_imgPtr);
+        _imgHdl = resourceManager.registerResource(img_ptr);
 
         if(!_imgHdl.valid())
         {
-            NXLogError("NXGPUTexture(%s): Could not register NXImage '%s' with resource manager",
+            NXLogError("NXGPUTextureResource(%s): Could not register NXImage '%s' with resource manager",
                        _name.c_str(), path());
             setState(kResourceStateError);
             return;
@@ -81,20 +83,20 @@ NXGPUTextureResource::load(NXResourceManager& resourceManager)
     }
 
     // load image
-    _imgPtr->load(resourceManager);
-    if(!_imgPtr->isLoaded())
+    img_ptr->load(resourceManager);
+    if(!img_ptr->isLoaded())
     {
-        NXLogError("NXGPUTexture(%s): Could not load NXImage '%s'",
+        NXLogError("NXGPUTextureResource(%s): Could not load NXImage '%s'",
                    _name.c_str(), path());
         setState(kResourceStateError);
         return;
     }
 
-    NX_ASSERT(_imgPtr->image());
+    NX_ASSERT(img_ptr->image());
 
     if (!gpuInterface)
     {
-        NXLogError("NXGPUTexture(%s): No gpu interface available",
+        NXLogError("NXGPUTextureResource(%s): No gpu interface available",
                    _name.c_str());
         setState(kResourceStateError);
         return;
@@ -104,20 +106,20 @@ NXGPUTextureResource::load(NXResourceManager& resourceManager)
     if (!gpuInterface->isValidTextureHdl(gpuHdl))
     {
         // create gpu texture
-        gpuHdl = gpuInterface->allocTexture(*_imgPtr->image());
+        gpuHdl = gpuInterface->allocTexture(*img_ptr->image());
         if (!gpuHdl.valid())
         {
-            NXLogError("NXGPUTexture(%s): Could not upload to gpu",
+            NXLogError("NXGPUTextureResource(%s): Could not upload to gpu",
                        _name.c_str());
             setState(kResourceStateError);
             return;
         }
     }
 
-    NXImage::ImageHeaderToGPUTextureDescription(_imgPtr->image()->header(), _texture.desc());
+    NXImage::ImageHeaderToGPUTextureDescription(img_ptr->image()->header(), _texture.desc());
     _texture.setGpuHdl(gpuHdl);
 
-    setSize(_imgPtr->size());
+    setSize(img_ptr->size());
     setState(kResourceStateLoaded);
 }
 
@@ -134,8 +136,6 @@ NXGPUTextureResource::unload(NXResourceManager& resourceManager)
     {
         gpuInterface->releaseTexture(_texture.gpuHdl());
     }
-    // release reference
-    _imgPtr.reset();
 
     setState(kResourceStateUnloaded);
 }

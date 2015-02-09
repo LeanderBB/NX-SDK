@@ -15,7 +15,7 @@ include(CheckCXXCompilerFlag)
 # Compiler flags
 #------------------------------------------------------------------------------
 if(NOT MSVC)
-    set(NX_C_WARNING_FLAGS "-Wall -Werror -Wextra -Winit-self -Wuninitialized -Wmissing-declarations -pedantic -fvisibility=hidden")
+    set(NX_C_WARNING_FLAGS "-Wall -Werror -Wextra -Winit-self -Wuninitialized -Wmissing-declarations -pedantic -fvisibility=hidden -fno-strict-aliasing")
     set(NX_CXX_WARNING_FLAGS "-Woverloaded-virtual")
     set(NX_C_COMPILE_FLAGS "-std=c99")
     set(NX_CXX_COMPILE_FLAGS "-std=c++11 -fno-exceptions -fno-rtti")

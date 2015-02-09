@@ -45,6 +45,7 @@ NXGPUProgramSource::load(NXIOBase* pIo)
 
     if (!file_size)
     {
+        NXLogError("NXGPUProgramSource::load: Invalid IO, need to know file size");
         return nullptr;
     }
 
@@ -52,9 +53,17 @@ NXGPUProgramSource::load(NXIOBase* pIo)
 
     if (pIo->read(p_data, file_size) != file_size)
     {
-        NXLogError("GPUProgramSource: Failed to read from input");
+        NXLogError("GPUProgramSource::load: Failed to read from input");
+        NXFree(p_data);
         return nullptr;
     }
+    flatbuffers::Verifier verifier(static_cast<const uint8_t*>(p_data), file_size);
+     if (!VerifyProgramSrcBuffer(verifier))
+     {
+         NXLogError("GPUProgramSource::load: Invalid GPUProgram source");
+         NXFree(p_data);
+         return nullptr;
+     }
 
     NXGPUProgramSource* p_source = new NXGPUProgramSource(p_data, file_size);
 

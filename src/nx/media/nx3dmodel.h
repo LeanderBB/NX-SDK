@@ -19,98 +19,87 @@
 #ifndef __NX_3DMODEL_H__
 #define __NX_3DMODEL_H__
 
+
+#include "nx/gpu/nxgpu.h"
+
 namespace nx
 {
 
-/*
- * NX 3D Model Format
- *
- * NX3DModelHeader
- *
- * for each entry
- *      NXModelEntryV1
- *      [Buffer Data]
- * end
- */
-
-struct NX3DModelHeader
-{
-    nx_u8  id[12];
-    nx_u32 version;
-    nx_u32 nVertices;
-    nx_u32 components;
-    nx_u32 nEntries;
-    nx_u32 drawmode;
-    nx_u32 drawSize; // contains number of indices or primitives
-};
-
-enum ModelCompomentBits
-{
-    kModelComponentVerticesBit = NX_BIT(0),
-    kModelComponentNormalsBit = NX_BIT(1),
-    kModelComponentUVBit = NX_BIT(2),
-    kModelComponentBinormalBit = NX_BIT(3),
-    kModelComponentTangentBit = NX_BIT(4),
-    kModelComponentColorBit = NX_BIT(5),
-    kModelComponentBonesBit = NX_BIT(6),
-    kModelComponentBoneIdxsBit = NX_BIT(7),
-    kModelComponentBoneNamesBit = NX_BIT(8),
-    kModelComponentIdxBit = NX_BIT(9)
-};
-
-struct NX3DModelEntry
-{
-    char name[32];
-    nx_u32 idx = NX_U32_MAX;
-    nx_u32 format = 0;
-    nx_u32 size = 0;
-    nx_u32 components = 0;
-};
-
 class NXIOBase;
+struct idlModel;
+struct idlMesh;
+class NXGPUShaderInputDesc;
+
+class NX3DModelMesh
+{
+public:
+    NX3DModelMesh(const idlMesh* _pMesh);
+
+    nx_u32 vertexCount() const;
+
+    nx_u32 indexCount() const;
+
+    GPUDrawMode drawMode() const;
+
+    nx_u32 numDataBuffers() const;
+
+    bool hasIndexBuffer() const;
+
+    nx_u32 indexBufferOffset() const;
+
+    bool dataBufferInfo(const nx_u32 idx,
+                        nx_u32& meshBufferIdx,
+                        nx_u32& offset) const;
+
+    nx_u32 numShaderInputs() const;
+
+    bool fillShaderInputdesc(const nx_u32 idx,
+                             NXGPUShaderInputDesc& desc) const;
+
+private:
+    const idlMesh* _pMesh;
+};
+
 class NX3DModel
 {
 public:
-    struct ModelEntry
-    {
-        NX3DModelEntry entry;
-        const void* ptr = nullptr;
-    };
-
-public:
-    static const nx_u8 sIdentifier[12];
 
     static NX3DModel* load(NXIOBase* pIO);
 
     ~NX3DModel();
 
-    const NX3DModelHeader& header() const;
-
-    const ModelEntry* entry(const unsigned idx) const;
-
-    const ModelEntry* indices() const;
-
     void logInfo() const;
-
-    void unload();
 
     size_t memorySize() const;
 
-protected:
+    void getIndexBuffer(const void *&ptr,
+                        nx_u32& size) const;
 
-    NX3DModel(const NX3DModelHeader& hdr,
-              const void* pBuffer,
+    void getDataBuffer(const void*& ptr,
+                       nx_u32& size,
+                       nx_u32& bindId,
+                       const nx_u32 idx) const;
+
+    nx_u32 numDataBuffers() const;
+
+    nx_u32 numSubMeshes() const;
+
+    const NX3DModelMesh* subMesh(const nx_u32 idx) const;
+
+private:
+
+    NX3DModel(const void* pBuffer,
               const size_t size);
 
-    void init();
+    void unload();
 
-protected:
-    typedef std::vector<ModelEntry> EntryVec_t;
-    const NX3DModelHeader _hdr;
-    EntryVec_t _entries;
-    ModelEntry _indices;
-    const char* _pContent;
-    size_t _contentSize;
+private:
+    typedef std::vector<NX3DModelMesh> MeshVec_t;
+
+    const void* _pData;
+    const size_t _dataSize;
+    const idlModel* _pModel;
+    MeshVec_t _meshes;
 };
 
 

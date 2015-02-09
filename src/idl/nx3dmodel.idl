@@ -1,0 +1,50 @@
+// NX3DModel IDL
+
+namespace nx;
+
+
+struct idlShaderInput
+{
+    bind_idx:ubyte;
+    data_type:ubyte;
+    data_idx:ubyte;
+    data_count:ubyte;
+    data_offset:ushort;
+}
+
+
+enum idlBufferType :ubyte {Vertex, Index}
+
+table idlBuffer
+{
+    bind_idx:ubyte;
+    type:idlBufferType;
+    data:[ubyte];
+}
+
+struct idlBufferRef
+{
+    bind_idx:ubyte;
+    offset:uint;
+}
+
+
+table idlMesh
+{
+    drawMode:uint;
+    vertCount:uint;
+    indexCount:uint;
+    localBuffers:[idlBufferRef];
+    localIdxBuffer:idlBufferRef;
+    input:[idlShaderInput];
+}
+
+table idlModel
+{
+    meshes:[idlMesh];
+    globalBuffers:[idlBuffer];
+    globalIdxBuffer:idlBuffer;
+}
+
+
+root_type idlModel;

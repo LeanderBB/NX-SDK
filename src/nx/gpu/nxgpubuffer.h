@@ -32,6 +32,7 @@ struct NXGPUBufferDesc
     nx_u32 mode = 0;
     nx_u32 size = 0;
     nx_u32 flags = 0;
+    const void* data = nullptr;
 };
 
 struct NXGPUBufferHdl
@@ -69,6 +70,7 @@ protected:
 };
 
 typedef NXTLSharedPtr<NXGPUBuffer> NXGPUBufferPtr_t;
+typedef std::vector<NXGPUBufferPtr_t> NXGPUBufferPtrVec_t;
 typedef std::vector<NXGPUBufferHdl> NXGPUBufferHdlVec_t;
 
 }

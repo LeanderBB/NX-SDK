@@ -91,7 +91,12 @@ NXGPUInterface::create()
     return new NXGPUInterfaceOGL();
 }
 
-NXGPUInterfaceOGL::NXGPUInterfaceOGL()
+NXGPUInterfaceOGL::NXGPUInterfaceOGL():
+    _hdlsBuffer(),
+    _hdlsProgram(),
+    _hdlsTexture(),
+    _hdlsVAO(),
+    _bufferManager(this)
 {
 }
 
@@ -133,11 +138,10 @@ NXGPUInterfaceOGL::shutdown()
 }
 
 NXHdl
-NXGPUInterfaceOGL::allocBuffer(const NXGPUBufferDesc& desc,
-                               const void *pData)
+NXGPUInterfaceOGL::allocBuffer(const NXGPUBufferDesc& desc)
 {
     NXHdl hdl;
-    auto ptr = NXOGLBuffer::create(desc, pData);
+    auto ptr = NXOGLBuffer::create(desc);
     if(!ptr)
     {
         return hdl;
@@ -343,6 +347,12 @@ NXGPUInterfaceOGL::uniformLocation(const NXHdl& proghdl,
         result = glGetUniformLocation(prog->oglHdl(), uniform);
     }
     return result;
+}
+
+NXGPUBufferManagerInterface&
+NXGPUInterfaceOGL::gpuBufferManager()
+{
+    return _bufferManager;
 }
 
 NXOGLProgramPtr_t

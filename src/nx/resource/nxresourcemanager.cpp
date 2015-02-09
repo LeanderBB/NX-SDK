@@ -24,6 +24,7 @@
 #include "nx/resource/nx3dmodelresource.h"
 #include "nx/resource/nxgputextureresource.h"
 #include "nx/resource/nxgpuprogramresource.h"
+#include "nx/resource/nxgpumeshresource.h"
 namespace nx
 {
 
@@ -38,7 +39,7 @@ NXResourceManager::NXResourceManager(NXFileManager& fileManager,
 {
     registerCreator("nxprog", NXGPUProgramResource::create);
     registerCreator("nximg", NXGPUTextureResource::create);
-    registerCreator("nx3d", NX3DModelResource::create);
+    registerCreator("nx3d", NXGPUMeshResource::create);
 }
 
 NXResourceManager::~NXResourceManager()

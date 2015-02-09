@@ -47,16 +47,7 @@ NXTLSharedPtr<NXOGLBuffer>
 NXOGLBuffer::create(const NXGPUBufferDesc& desc)
 {
     NXOGLBufferPtr_t buffer = nxMakeTLShared<NXOGLBuffer>(desc);
-    buffer->allocateStorage();
-    return buffer;
-}
-
-NXTLSharedPtr<NXOGLBuffer>
-NXOGLBuffer::create(const NXGPUBufferDesc& desc,
-                    const void* pData)
-{
-    NXOGLBufferPtr_t buffer = nxMakeTLShared<NXOGLBuffer>(desc);
-    buffer->allocateStorage(pData);
+    buffer->allocateStorage(desc.data);
     return buffer;
 }
 

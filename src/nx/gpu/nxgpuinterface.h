@@ -24,6 +24,7 @@
 #include "nx/gpu/nxgputexture.h"
 #include "nx/gpu/nxgpuprogramsource.h"
 #include "nx/gpu/nxgpushaderinput.h"
+#include "nx/gpu/nxgpubuffermanagerinterface.h"
 namespace nx
 {
 class NXImage;
@@ -42,8 +43,7 @@ public:
 
     virtual ~NXGPUInterface(){}
 
-    virtual NXHdl allocBuffer(const NXGPUBufferDesc& desc,
-                              const void* pData = nullptr) = 0;
+    virtual NXHdl allocBuffer(const NXGPUBufferDesc& desc) = 0;
 
     virtual void releaseBuffer(const NXHdl& hdl) = 0;
 
@@ -78,6 +78,8 @@ public:
 
     virtual int uniformLocation(const NXHdl& proghdl,
                                 const char* uniform) const = 0;
+
+    virtual NXGPUBufferManagerInterface& gpuBufferManager() = 0;
 
 protected:
     NXGPUInterface() {}
