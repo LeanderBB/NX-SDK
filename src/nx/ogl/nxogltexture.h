@@ -29,12 +29,14 @@ struct NXOGLTextureDescription
     nx_u32 format;
     nx_u32 internal;
     nx_u32 dataType;
-    bool   compressed;
+    nx_u8  compressed;
+    nx_u8  depthComponent;
+    nx_u16 __padding;
 };
 
-const NXOGLTextureDescription* NXOGLTextureDescriptionForGPUTextureFormat(const GPUTextureFormat format);
+const NXOGLTextureDescription* nxOGLTextureDescriptionForGPUTextureFormat(const GPUTextureFormat format);
 
-const NXOGLTextureDescription* NXOGLTextureDescriptions();
+const NXOGLTextureDescription* nxOGLTextureDescriptions();
 
 nx_u32 NXOGLTextureType(const GPUTextureType type);
 
@@ -71,6 +73,16 @@ public:
                 const int unpackAlignment = 1);
 
     NXOGLTexture(const NXGPUTextureDesc& desc);
+
+    nx_u32 width() const
+    {
+        return _desc.width;
+    }
+
+    nx_u32 height() const
+    {
+        return _desc.height;
+    }
 
 protected:
 

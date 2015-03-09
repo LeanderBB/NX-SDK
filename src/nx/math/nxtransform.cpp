@@ -42,6 +42,12 @@ NXTransform::rotate(const glm::quat& rotation)
 }
 
 void
+NXTransform::rotatePrefix(const glm::quat& rotation)
+{
+    _rotation = rotation * _rotation;
+}
+
+void
 NXTransform::identity()
 {
     _position = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -50,7 +56,7 @@ NXTransform::identity()
 }
 
 glm::mat4
-NXTransform::toMatix() const
+NXTransform::toMatrix() const
 {
     //glm::mat4 result = glm::mat4_cast(_rotation);
     //result = glm::translate(result, _position);
@@ -93,7 +99,7 @@ NXTransform::right() const
 
 
 glm::mat4
-NXTransform::toMatixInv() const
+NXTransform::toMatrixInv() const
 {
     glm::mat4 rotation_matrix = glm::mat4_cast(_rotation);
     glm::mat4 rotation_inv= glm::inverse(rotation_matrix);

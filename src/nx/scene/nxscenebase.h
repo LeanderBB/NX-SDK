@@ -26,15 +26,16 @@ namespace nx
 class NXSceneBase
 {
 public:
+
     NXSceneBase();
 
     virtual ~NXSceneBase();
 
-
-
-
-
     virtual void update(const double sec) = 0;
+
+
+
+protected:
 };
 
 }

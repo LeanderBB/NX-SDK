@@ -28,7 +28,7 @@
 namespace nx
 {
 
-#if defined(NX_SYSTEM_ANDROID)
+#if defined(NX_OS_UNIX) && !defined(NX_SYSTEM_SDL2)
 
 static struct timespec sTimeStart;
 static bool sTimeStarted = false;
@@ -59,7 +59,7 @@ nxGetPerformanceCounter()
 {
 #if defined(NX_SYSTEM_SDL2)
     return SDL_GetPerformanceCounter();
-#elif defined(NX_SYSTEM_ANDROID)
+#elif defined(NX_OS_UNIX)
     nx_u64 ticks;
     if (!sTimeStarted)
     {
@@ -85,7 +85,7 @@ nxGetPerformanceFrequency()
 {
 #if defined(NX_SYSTEM_SDL2)
     return SDL_GetPerformanceFrequency();
-#elif defined(NX_SYSTEM_ANDROID)
+#elif defined(NX_OS_UNIX)
     return 1000000000;
 #else
     NXLogError("nxGetPerformanceFrequency not yet implemented");
@@ -97,7 +97,7 @@ nx_u32 nxGetTicks()
 {
 #if defined(NX_SYSTEM_SDL2)
     return SDL_GetTicks();
-#elif defined(NX_SYSTEM_ANDROID)
+#elif defined(NX_OS_UNIX)
     nx_u32 ticks;
     if (!sTimeStarted)
     {

@@ -39,6 +39,8 @@ struct NXWindowDesc
 
 #if defined(NX_SYSTEM_SDL2)
 #include "nx/sys/sdl/nxwindowsdl.h"
+#elif defined(NX_SYSTEM_GLFW)
+#include "nx/sys/glfw/nxwindowglfw.h"
 #elif defined(NX_SYSTEM_ANDROID)
 #include "nx/sys/android/nxwindowandroid.h"
 #else

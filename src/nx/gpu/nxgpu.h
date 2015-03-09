@@ -100,14 +100,37 @@ enum GPUBufferType
     kGPUBufferTypeCompute
 };
 
-enum GPUBufferMode
+enum GPUBufferImmutableMode
 {
-    kGPUBufferModePresistentBit,
-    kGPUBufferModeCoherentBit,
-    kGPUBufferModeDynamicStorageBit,
-    kGPUBufferModeWriteBit,
-    kGPUBufferModeReadBit
+    kGPUBufferImmutableModePresistentBit = NX_BIT(0),
+    kGPUBufferImmutableModeCoherentBit = NX_BIT(1),
+    kGPUBufferModeImmutableDynamicStorageBit = NX_BIT(2),
+    kGPUBufferModeImmutableWriteBit = NX_BIT(3),
+    kGPUBufferModeImmutableReadBit = NX_BIT(4),
+    kGPUBufferImmutableModeMask = 0x1f
+
 };
 
+enum GPUBufferAccess
+{
+    kGPUBufferAccessDynamicBit = NX_BIT(5),
+    kGPUBufferAccessStreamBit = NX_BIT(6),
+    kGPUBufferAccessStaticBit = NX_BIT(7)
+};
+
+enum GPURTAttachment
+{
+    kGPURTAttachmentDepth,
+    kGPURTAttachmentStencil,
+    kGPURTAttachmentColor0,
+    kGPURTAttachmentColor1,
+    kGPURTAttachmentColor2,
+    kGPURTAttachmentColor3,
+    kGPURTAttachmentColor4,
+    kGPURTAttachmentColor5,
+    kGPURTAttachmentColor6,
+    kGPURTAttachmentColor7,
+    kGPURTAttachmentColorMax
+};
 
 #endif

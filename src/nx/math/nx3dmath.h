@@ -34,7 +34,7 @@
 namespace glm
 {
 template <typename T, precision P>
-GLM_FUNC_QUALIFIER T length_sqr(detail::tvec2<T, P> const & v)
+GLM_FUNC_QUALIFIER T length_sqr(glm::tvec2<T, P> const & v)
 {
     GLM_STATIC_ASSERT(std::numeric_limits<T>::is_iec559, "'length' only accept floating-point inputs");
     T sqr = v.x * v.x + v.y * v.y;
@@ -42,7 +42,7 @@ GLM_FUNC_QUALIFIER T length_sqr(detail::tvec2<T, P> const & v)
 }
 
 template <typename T, precision P>
-GLM_FUNC_QUALIFIER T length_sqr(detail::tvec3<T, P> const & v)
+GLM_FUNC_QUALIFIER T length_sqr(glm::tvec3<T, P> const & v)
 {
     GLM_STATIC_ASSERT(std::numeric_limits<T>::is_iec559, "'length' only accept floating-point inputs");
     T sqr = v.x * v.x + v.y * v.y + v.z * v.z;

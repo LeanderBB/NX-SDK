@@ -30,6 +30,14 @@
 namespace nx
 {
 
+static NXSystem* sgSystem = nullptr;
+
+NXSystem*
+NXSystem::instance()
+{
+    return sgSystem;
+}
+
 NXSystem::NXSystem():
     _evtMan(),
     _quit(false),
@@ -42,6 +50,18 @@ NXSystem::NXSystem():
     _evtMan.addEvent(NXSysEvtWinResize::sEvtType);
     _evtMan.addEvent(NXSysEvtWinCreated::sEvtType);
     _evtMan.addEvent(NXSysEvtWinDestroy::sEvtType);
+
+    if (sgSystem)
+    {
+        NXLogFatal("NXSystem: Only one instance of NXSystem can be running!!");
+    }
+
+    sgSystem = this;
+}
+
+NXSystem::~NXSystem()
+{
+    sgSystem = nullptr;
 }
 
 bool

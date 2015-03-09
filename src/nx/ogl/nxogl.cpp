@@ -29,9 +29,6 @@ NXOGL::logGLInfo(const bool logExtensions)
     NXLog("OpenGL Renderer                      : %s", glGetString(GL_RENDERER));
     NXLog("OpenGL Version                       : %s", glGetString(GL_VERSION));
     NXLog("OpenGL GLSL Version                  : %s", glGetString(GL_SHADING_LANGUAGE_VERSION));
-    NXLog("OpenGL Direct State Access (ARB)     : %s", (FLEXT_ARB_direct_state_access == GL_TRUE) ? "yes" : "no");
-    NXLog("OpenGL Direct State Access (EXT)     : %s", (FLEXT_EXT_direct_state_access == GL_TRUE) ? "yes" : "no");
-    NXLog("OpenGL Bindless Textures             : %s", (FLEXT_ARB_bindless_texture == GL_TRUE) ? "yes" : "no");
     NXLog("OpenGL ASTC Textures                 : %s", ((FLEXT_KHR_texture_compression_astc_hdr == GL_TRUE) || (FLEXT_KHR_texture_compression_astc_ldr == GL_TRUE)) ? "yes" : "no");
 
     // get extensions

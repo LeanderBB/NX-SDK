@@ -196,7 +196,7 @@ NX3DModel::logInfo() const
             NXLog("    Shader Input (%u):", j);
             NXLog("      bind_idx           : %u", cur_input->bind_idx());
             NXLog("      data_type          : %u", cur_input->data_type());
-            NXLog("      data_idx           : %u", cur_input->data_idx());
+            NXLog("      data_idx           : %s", nxGPUShaderInputIdxToStr(static_cast<GPUShaderInputIdx>(cur_input->data_idx())));
             NXLog("      data_count         : %u", cur_input->data_count());
             NXLog("      data_offset        : %u", cur_input->data_offset());
         }

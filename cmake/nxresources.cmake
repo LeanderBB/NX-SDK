@@ -17,18 +17,23 @@ endif()
 # INFOLDER_SHADERS - location of the shaders listed in the .prog
 # OUTFOLDER - Output location
 # NAMES - List of program names
-macro(NX_PROCESS_GPUPROGRAMS TARGET INFOLDER INFOLDER_SHADERS OUTFOLDER NAMES)
-    file(MAKE_DIRECTORY ${OUTFOLDER})
+function(NX_PROCESS_GPUPROGRAMS)
+    set(options)
+    set(oneValueArgs TARGET INFOLDER INFOLDER_SHADERS OUTFOLDER)
+    set(multiValueArgs NAMES)
+
+    cmake_parse_arguments(NX_PROCESS_GPUPROGRAMS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
+
+    file(MAKE_DIRECTORY ${NX_PROCESS_GPUPROGRAMS_OUTFOLDER})
     set(OUTFILES)
-    foreach(PROG ${NAMES})
-        set(INPUT_NAME  ${INFOLDER}/${PROG}.prog)
-        set(OUTPUT_NAME ${OUTFOLDER}/${PROG}.nxprog)
+    foreach(PROG ${NX_PROCESS_GPUPROGRAMS_NAMES})
+        set(INPUT_NAME  ${NX_PROCESS_GPUPROGRAMS_INFOLDER}/${PROG}.prog)
+        set(OUTPUT_NAME ${NX_PROCESS_GPUPROGRAMS_OUTFOLDER}/${PROG}.nxprog)
         add_custom_command(
-            TARGET ${TARGET} PRE_BUILD
-            COMMAND ${nxprogrambuilder_bin} -d ${INPUT_NAME} -s ${INFOLDER_SHADERS} -o ${OUTPUT_NAME}
+            TARGET ${NX_PROCESS_GPUPROGRAMS_TARGET} PRE_BUILD
+            COMMAND ${nxprogrambuilder_bin} -d ${INPUT_NAME} -s ${NX_PROCESS_GPUPROGRAMS_INFOLDER_SHADERS} -o ${OUTPUT_NAME}
             DEPENDS ${INPUT_NAME}
             COMMENT "Creating ${OUTPUT_NAME}...")
         set(OUTFILES ${OUTFILES} ${OUTPUT_NAME})
     endforeach()
-endmacro()
-
+endfunction()

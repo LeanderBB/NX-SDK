@@ -46,7 +46,7 @@ NXGPUMesh::create(const NX3DModel& model,
     {
         NXGPUBufferDesc idxbuf_desc;
         idxbuf_desc.size = buffer_size;
-        idxbuf_desc.flags = 0;
+        idxbuf_desc.flags = kGPUBufferAccessStaticBit;
         idxbuf_desc.type = kGPUBufferTypeIndex;
         idxbuf_desc.mode = 0;
         idxbuf_desc.data = buffer_ptr;
@@ -74,7 +74,7 @@ NXGPUMesh::create(const NX3DModel& model,
 
             NXGPUBufferDesc databuf_desc;
             databuf_desc.size = buffer_size;
-            databuf_desc.flags = 0;
+            databuf_desc.flags = kGPUBufferAccessStaticBit;
             databuf_desc.type = kGPUBufferTypeData;
             databuf_desc.mode = 0;
             databuf_desc.data = buffer_ptr;

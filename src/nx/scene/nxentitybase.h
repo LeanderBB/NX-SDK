@@ -20,6 +20,7 @@
 #define __NX_ENTITYBASE_H__
 
 #include "nx/hdl/nxhdl.h"
+#include "nx/scene/nxcomponents.h"
 namespace nx
 {
 
@@ -31,38 +32,19 @@ enum EntityFlag
     kEntityFlagVisibile = NX_BIT(3)
 };
 
-class NXTransform;
-class NXAABB;
-class NXComponentBase;
 class NXSceneBase;
 class NXEntityBase
 {
 public:
-
     typedef std::vector<NXHdl> ChildrenVec_t;
-    typedef std::vector<NXComponentBase*> ComponentVec_t;
 
     virtual ~NXEntityBase();
 
     const char* name() const;
 
-    void setName(const char* name);
-
-    nx_u32 entityType() const;
-
-    NXSceneBase* owner();
-
-    NXTransform* localTransform();
-
-    NXTransform* worldTransform();
-
-    NXAABB* localBV();
-
-    NXAABB* fullBV();
+    virtual nx_u32 entityType() const = 0;
 
     const ChildrenVec_t& children() const;
-
-    const ComponentVec_t& components() const;
 
     bool addChild(const NXHdl hdl);
 
@@ -70,46 +52,22 @@ public:
 
     void removeChild(const NXHdl hdl);
 
-    bool addComponent(const NXComponentBase* pComponent);
-
-    bool containsComponent(const nx_u32 componentType) const;
-
-    bool containsComponent(const NXComponentBase* pComponent) const;
-
-    void removeComponent(const nx_u32 componentType);
-
-    NXComponentBase* removeComponentWithoutDelete(const nx_u32 componentType);
-
-    NXComponentBase* component(const nx_u32 componentType);
-
-    void updateTransforms();
-
-    void updateComponents(const double seconds);
-
 protected:
-    NXEntityBase(const nx_u32 entityType);
+    NXEntityBase(const char* name);
 
 private:
     NX_CPP_NO_COPY(NXEntityBase);
 
 protected:
     friend class NXSceneBase;
-
-    NXSceneBase* _pOwner;
-    NXTransform* _pLocalTransform;
-    NXTransform* _pWorldTransform;
-    NXAABB* _pLocalBV;
-    NXAABB* _pFullBV;
-
+    NXSceneBase& _scene;
+    const NXString _name;
     NXHdl _parent;
-    const nx_u32 _entityType;
-
-    NXString _name;
-
-    ChildrenVec_t _children;
-    ComponentVec_t _components;
-
     nx_u32 _state;
+    ChildrenVec_t _children;
+    NXTransfromComponent* _pTransformComponent;
+    NXRenderComponent* _pRenderComponent;
+
 };
 }
 

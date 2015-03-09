@@ -9,6 +9,7 @@ set(NXTOOLS_LIBRARIES
     ${NXCORE_LIBRARIES}
 )
 
+add_subdirectory(nxfontconverter)
 add_subdirectory(nxprogrambuilder)
 add_subdirectory(nxktxtonximg)
 add_subdirectory(nximginfo)

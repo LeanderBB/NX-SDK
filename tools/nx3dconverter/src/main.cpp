@@ -53,11 +53,12 @@ int main(const int argc, const char** argv)
 
 
     unsigned int convert_flags = 0;
-
+    unsigned int post_process_flags = 0;
 
     if (args.isSet(kOptionInterleavedBuffers))
     {
         convert_flags |= kConverterPackComponentsBit;
+        post_process_flags |= kPostProcessFlagInterleaved;
     }
 
     NXInputStateVec_t input_state;
@@ -70,7 +71,7 @@ int main(const int argc, const char** argv)
 
     NX3DModelPostProcess post_process(input_state);
 
-    if (!post_process.buildOutputData())
+    if (!post_process.buildOutputData(post_process_flags))
     {
         return EXIT_FAILURE;
     }

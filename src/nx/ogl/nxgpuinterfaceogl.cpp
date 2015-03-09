@@ -22,16 +22,21 @@
 #include "nx/ogl/nxogl.h"
 #include "nx/ogl/nxoglinternal.h"
 
+#if defined(NX_SYSTEM_GLFW)
+#include <GLFW/glfw3.h>
+#endif
+
 namespace nx
 {
 
-static void APIENTRY NXWindowGLDbgCallback(GLenum source,
-                                           GLenum type,
-                                           GLuint id,
-                                           GLenum severity,
-                                           GLsizei length,
-                                           const GLchar *message,
-                                           const void *userParam)
+static void APIENTRY
+NXWindowGLDbgCallback(GLenum source,
+                      GLenum type,
+                      GLuint id,
+                      GLenum severity,
+                      GLsizei length,
+                      const GLchar *message,
+                      const void *userParam)
 {
     (void) source;
     (void) id;
@@ -110,7 +115,11 @@ NXGPUInterfaceOGL::init()
 {
 
     // init opengl
+#if defined(NX_SYSTEM_GLFW)
+    int result = flextInit(glfwGetCurrentContext());
+#else
     int result = flextInit();
+#endif
     if (result != GL_TRUE)
     {
         NXLogError("NXGPUInterfaceOGL::init Failed to load all required OpenGL function. \

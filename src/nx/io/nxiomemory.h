@@ -64,8 +64,12 @@ public:
         return _buffer.read;
     }
 
-protected:
+    virtual bool directMemoryAccess() const
+    {
+        return true;
+    }
 
+    virtual const void *directMemoryAccessPtr(const size_t offset) const;
 
 protected:
     union

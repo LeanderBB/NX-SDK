@@ -55,8 +55,11 @@ NX3DModelPostProcess::buildOutputData(const nx_u32 flags)
 {
     if (flags & kPostProcessFlagInterleaved)
     {
-        NXLogError("PostProcess: Interleaved option not yet implemented!!");
-        return false;
+        if (!validInterleavedBuffers())
+        {
+            return false;
+        }
+        return buildInterleaved();
     }
     else
     {
@@ -72,8 +75,40 @@ NX3DModelPostProcess::buildOutputData(const nx_u32 flags)
 bool
 NX3DModelPostProcess::validInterleavedBuffers() const
 {
-    NXLogWarning("Validating interleaved buffers not yet implemented");
-    return false;
+    nx_u32 count_total = 0;
+    nx_u32 count_idx = 0;
+
+    for (auto& input : _input)
+    {
+        nx_u32 count_total_next = 0;
+        nx_u32 count_idx_next = 0;
+        count_total_next += sizeof(float) * input.vertices.size();
+        count_total_next += sizeof(float) * input.texcoord0.size();
+        count_total_next += sizeof(float) * input.texcoord1.size();
+        count_total_next += sizeof(float) * input.normals.size();
+        count_total_next += sizeof(float) * input.tangents.size();
+        count_total_next += sizeof(float) * input.binormal.size();
+        count_total_next += sizeof(float) * input.color.size();
+        count_total_next += count_total;
+        count_idx_next = count_idx + sizeof(nx_u32) * input.indices.size();
+
+        if (count_total_next < count_total)
+        {
+            NXLogError("Total buffer count will overflow buffer capacity");
+            return false;
+        }
+
+        if (count_idx_next < count_idx)
+        {
+            NXLogError("Total index count will overflow buffer capacity");
+            return false;
+        }
+
+        count_total = count_total_next;
+        count_idx = count_idx_next;
+    }
+
+    return true;
 }
 
 bool
@@ -431,6 +466,230 @@ NX3DModelPostProcess::buildSeparate()
             offset_color += copy_size;
         }
     }
+    return true;
+}
+
+bool
+NX3DModelPostProcess::buildInterleaved()
+{
+    nx_u32 total_vert = 0;
+    nx_u32 total_texcoord0 = 0;
+    nx_u32 total_texcoord1 = 0;
+    nx_u32 total_normals = 0;
+    nx_u32 total_tangents = 0;
+    nx_u32 total_binormal = 0;
+    nx_u32 total_indices = 0;
+    nx_u32 total_color = 0;
+
+    nx_u32 buffer_offset = 0;
+    nx_u32 offset_indices = 0;
+    nx_u32 buffer_total;
+
+    // build total count;
+    for (auto& input : _input)
+    {
+        total_vert += input.vertices.size();
+        total_texcoord0 += input.texcoord0.size();
+        total_texcoord1 += input.texcoord1.size();
+        total_normals += input.normals.size();
+        total_tangents += input.tangents.size();
+        total_binormal += input.binormal.size();
+        total_color += input.color.size();
+        total_indices += input.indices.size();
+    }
+
+    buffer_total = (total_vert + total_texcoord0 + total_texcoord1 + total_normals
+            + total_tangents + total_binormal + total_color) * sizeof(float);
+
+
+    // create index buffer
+    _output.globalIndexBuffer.size = total_indices * sizeof(nx_u32);
+    _output.globalIndexBuffer.buffer = NXMalloc(total_indices * sizeof(nx_u32));
+
+     // create output buffer
+    _output.globalBuffers.resize(1);
+    auto& global_buffer = _output.globalBuffers[0];
+    global_buffer.idx = kInterLeavedBufferBindingDefault;
+    global_buffer.size = buffer_total;
+    global_buffer.buffer = NXMalloc(buffer_total);
+
+    // copy data
+    _output.meshes.resize(_input.size());
+
+    for(unsigned int i = 0; i < _input.size(); ++i)
+    {
+        const NXInputState& cur_input = _input[i];
+        NXOutputMesh& cur_mesh = _output.meshes[i];
+        cur_mesh.vertCount = cur_input.vertices.size();
+        cur_mesh.indexCount = cur_input.indices.size();
+        cur_mesh.bufferRefs.resize(1);
+
+        // setup index buffer
+        if (cur_input.indices.size())
+        {
+            nx_u32 idx_size = cur_input.indices.size() * sizeof(nx_u32);
+            memcpy(nxBufferOffset(_output.globalIndexBuffer.buffer, offset_indices),
+                   cur_input.indices.data(), idx_size);
+            cur_mesh.idxBufferRef.offset = offset_indices;
+            offset_indices += idx_size;
+        }
+
+        // create inputs and create strides calulate strides
+
+        nx_u32 cur_stride = 0;
+
+        {
+            NXGPUShaderInputDesc shader_input;
+            shader_input.binding_idx = kInterLeavedBufferBindingDefault;
+            shader_input.data_count = 3;
+            shader_input.data_idx = kGPUShaderInputIdxVertices;
+            shader_input.data_offset = cur_stride;
+            shader_input.data_type = kGPUDataTypeFloat;
+            shader_input.enabled = 1;
+            cur_mesh.shaderInput.push_back(shader_input);
+            cur_stride += 3 * sizeof(float);
+        }
+
+        if (!cur_input.texcoord0.empty())
+        {
+            NXGPUShaderInputDesc shader_input;
+            shader_input.binding_idx = kInterLeavedBufferBindingDefault;
+            shader_input.data_count = 2;
+            shader_input.data_idx = kGPUShaderInputIdxTexCoord0;
+            shader_input.data_offset = cur_stride;
+            shader_input.data_type = kGPUDataTypeFloat;
+            shader_input.enabled = 1;
+            cur_mesh.shaderInput.push_back(shader_input);
+            cur_stride += 2 * sizeof(float);
+        }
+
+        if (!cur_input.texcoord1.empty())
+        {
+            NXGPUShaderInputDesc shader_input;
+            shader_input.binding_idx = kInterLeavedBufferBindingDefault;
+            shader_input.data_count = 2;
+            shader_input.data_idx = kGPUShaderInputIdxTexCoord1;
+            shader_input.data_offset = cur_stride;
+            shader_input.data_type = kGPUDataTypeFloat;
+            shader_input.enabled = 1;
+            cur_mesh.shaderInput.push_back(shader_input);
+            cur_stride += 2 * sizeof(float);
+        }
+
+        if (!cur_input.normals.empty())
+        {
+            NXGPUShaderInputDesc shader_input;
+            shader_input.binding_idx = kInterLeavedBufferBindingDefault;
+            shader_input.data_count = 3;
+            shader_input.data_idx = kGPUShaderInputIdxNormals;
+            shader_input.data_offset = cur_stride;
+            shader_input.data_type = kGPUDataTypeFloat;
+            shader_input.enabled = 1;
+            cur_mesh.shaderInput.push_back(shader_input);
+            cur_stride += 3 * sizeof(float);
+        }
+
+        if (!cur_input.tangents.empty())
+        {
+            NXGPUShaderInputDesc shader_input;
+            shader_input.binding_idx = kInterLeavedBufferBindingDefault;
+            shader_input.data_count = 3;
+            shader_input.data_idx = kGPUShaderInputIdxTangent;
+            shader_input.data_offset = cur_stride;
+            shader_input.data_type = kGPUDataTypeFloat;
+            shader_input.enabled = 1;
+            cur_mesh.shaderInput.push_back(shader_input);
+            cur_stride += 3 * sizeof(float);
+        }
+
+        if (!cur_input.binormal.empty())
+        {
+            NXGPUShaderInputDesc shader_input;
+            shader_input.binding_idx = kInterLeavedBufferBindingDefault;
+            shader_input.data_count = 3;
+            shader_input.data_idx = kGPUShaderInputIdxBinormal;
+            shader_input.data_offset = cur_stride;
+            shader_input.data_type = kGPUDataTypeFloat;
+            shader_input.enabled = 1;
+            cur_mesh.shaderInput.push_back(shader_input);
+            cur_stride += 3 * sizeof(float);
+        }
+
+        if (!cur_input.color.empty())
+        {
+            NXGPUShaderInputDesc shader_input;
+            shader_input.binding_idx = kInterLeavedBufferBindingDefault;
+            shader_input.data_count = 4;
+            shader_input.data_idx = kGPUShaderInputIdxColor;
+            shader_input.data_offset = cur_stride;
+            shader_input.data_type = kGPUDataTypeFloat;
+            shader_input.enabled = 1;
+            cur_mesh.shaderInput.push_back(shader_input);
+            cur_stride += 4 * sizeof(float);
+        }
+
+
+        // add buffer ref;
+        NXOutputBufferRef& buffer_ref = cur_mesh.bufferRefs[kInterLeavedBufferBindingDefault];
+        buffer_ref.idx = kInterLeavedBufferBindingDefault;
+        buffer_ref.offset = buffer_offset;
+
+        // copy buffer data
+        for(nx_u32 j = 0; j < cur_input.vertices.size() / 3; ++j)
+        {
+            void* ptr = nxBufferOffset(global_buffer.buffer, buffer_offset);
+
+            // copy vertices
+            memcpy(ptr, &cur_input.vertices[j * 3], sizeof(float) * 3);
+            buffer_offset += sizeof(float) * 3;
+            ptr = nxBufferOffset(global_buffer.buffer, buffer_offset);
+
+            if (!cur_input.texcoord0.empty())
+            {
+                memcpy(ptr, &cur_input.texcoord0[j * 2], sizeof(float) * 2);
+                buffer_offset += sizeof(float) * 2;
+                ptr = nxBufferOffset(global_buffer.buffer, buffer_offset);
+            }
+
+            if (!cur_input.texcoord1.empty())
+            {
+                memcpy(ptr, &cur_input.texcoord1[j * 2], sizeof(float) * 2);
+                buffer_offset += sizeof(float) * 2;
+                ptr = nxBufferOffset(global_buffer.buffer, buffer_offset);
+            }
+
+            if (!cur_input.normals.empty())
+            {
+                memcpy(ptr, &cur_input.normals[j * 3], sizeof(float) * 3);
+                buffer_offset += sizeof(float) * 3;
+                ptr = nxBufferOffset(global_buffer.buffer, buffer_offset);
+            }
+
+            if (!cur_input.tangents.empty())
+            {
+                memcpy(ptr, &cur_input.tangents[j * 3], sizeof(float) * 3);
+                buffer_offset += sizeof(float) * 3;
+                ptr = nxBufferOffset(global_buffer.buffer, buffer_offset);
+            }
+
+            if (!cur_input.binormal.empty())
+            {
+                memcpy(ptr, &cur_input.binormal[j * 3], sizeof(float) * 3);
+                buffer_offset += sizeof(float) * 3;
+                ptr = nxBufferOffset(global_buffer.buffer, buffer_offset);
+            }
+
+            if (!cur_input.color.empty())
+            {
+                memcpy(ptr, &cur_input.color[j * 4], sizeof(float) * 4);
+                buffer_offset += sizeof(float) * 4;
+                ptr = nxBufferOffset(global_buffer.buffer, buffer_offset);
+            }
+        }
+
+
+    }
+
     return true;
 }
 

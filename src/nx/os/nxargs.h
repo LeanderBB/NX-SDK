@@ -29,7 +29,10 @@ enum ArgFlag
     kArgFlagMultiValue = NX_BIT(2)
 };
 
-
+enum
+{
+    KArgsOptionHelp = 0
+};
 
 class NXArgs
 {
@@ -53,6 +56,9 @@ public:
     /// option and the number of values present in size.
     const char** get(const nx_u32 id,
                      int& size) const;
+
+    /// Return nullptr if not found or arg is not of type single
+    const char* getSingleArg(const nx_u32 id) const;
 
     void clear();
 

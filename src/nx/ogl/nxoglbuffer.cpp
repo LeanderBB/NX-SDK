@@ -16,14 +16,14 @@
 // You should have received a copy of the GNU General Public License
 // along with NX. If not, see <http://www.gnu.org/licenses/>.
 //
-#include "nxoglinternal.h"
-#include "nxoglbuffer.h"
+#include "nx/ogl/nxoglinternal.h"
+#include "nx/ogl/nxoglbuffer.h"
 
 namespace nx
 {
 
 nx_u32
-NXOGLBufferType(const GPUBufferType type)
+nxOGLBufferType(const GPUBufferType type)
 {
     switch(type)
     {
@@ -37,6 +37,28 @@ NXOGLBufferType(const GPUBufferType type)
         return GL_TRANSFORM_FEEDBACK_BUFFER;
     case kGPUBufferTypeCompute:
         return GL_SHADER_STORAGE_BUFFER;
+    default:
+        NX_ASSERT_UNREACHABLE();
+        return GL_INVALID_ENUM;
+    }
+}
+
+nx_u32
+nxOGLBufferAccess(const nx_u32 flags)
+{
+    const nx_u32 buffer_access = flags & (~kGPUBufferImmutableModeMask);
+    switch(buffer_access)
+    {
+
+    case kGPUBufferAccessDynamicBit:
+        return GL_DYNAMIC_DRAW;
+
+    case kGPUBufferAccessStreamBit:
+        return GL_STREAM_DRAW;
+
+    case kGPUBufferAccessStaticBit:
+        return GL_STATIC_DRAW;
+
     default:
         NX_ASSERT_UNREACHABLE();
         return GL_INVALID_ENUM;
@@ -77,10 +99,26 @@ NXOGLBuffer::size() const
 
 NXOGLBuffer::NXOGLBuffer(const NXGPUBufferDesc& desc):
     _desc(desc),
-    _oglType(NXOGLBufferType(desc.type)),
-    _mapped(false)
+    _oglType(nxOGLBufferType(desc.type)),
+    _flags(0)
 {
     glCreateBuffers(1, &_oglhdl);
+    if (desc.flags & kGPUBufferImmutableModeMask)
+    {
+        _flags |=kOGLBufferFlagImmutable;
+    }
+}
+
+bool
+NXOGLBuffer::mapped() const
+{
+    return _flags & kOGLBufferFlagMappedBit;
+}
+
+bool
+NXOGLBuffer::immutable() const
+{
+    return _flags & kOGLBufferFlagImmutable;
 }
 
 void
@@ -88,32 +126,39 @@ NXOGLBuffer::allocateStorage(const void* ptr)
 {
     GLbitfield glflags = 0;
 
-    if (_desc.mode & kGPUBufferModeCoherentBit)
+    if (_flags & kOGLBufferFlagImmutable)
     {
-        glflags |= GL_MAP_COHERENT_BIT;
-    }
+        if (_desc.mode & kGPUBufferImmutableModeCoherentBit)
+        {
+            glflags |= GL_MAP_COHERENT_BIT;
+        }
 
-    if (_desc.mode & kGPUBufferModePresistentBit)
+        if (_desc.mode & kGPUBufferImmutableModePresistentBit)
+        {
+            glflags |= GL_MAP_PERSISTENT_BIT;
+        }
+
+        if (_desc.mode & kGPUBufferModeImmutableDynamicStorageBit)
+        {
+            glflags |= GL_DYNAMIC_STORAGE_BIT;
+        }
+
+        if (_desc.mode & kGPUBufferModeImmutableWriteBit)
+        {
+            glflags |= GL_MAP_READ_BIT;
+        }
+
+        if (_desc.mode & kGPUBufferModeImmutableReadBit)
+        {
+            glflags |= GL_MAP_WRITE_BIT;
+        }
+        glNamedBufferStorage(oglHdl(), _desc.size, ptr, glflags);
+    }
+    else
     {
-        glflags |= GL_MAP_PERSISTENT_BIT;
+        nx_u32 buffer_access = nxOGLBufferAccess(_desc.flags);
+        glNamedBufferData(_oglhdl, _desc.size, ptr, buffer_access);
     }
-
-    if (_desc.mode & kGPUBufferModeDynamicStorageBit)
-    {
-        glflags |= GL_DYNAMIC_STORAGE_BIT;
-    }
-
-    if (_desc.mode & kGPUBufferModeWriteBit)
-    {
-        glflags |= GL_MAP_READ_BIT;
-    }
-
-    if (_desc.mode & kGPUBufferModeReadBit)
-    {
-        glflags |= GL_MAP_WRITE_BIT;
-    }
-
-    glNamedBufferStorage(oglHdl(), _desc.size, ptr, glflags);
 }
 
 }

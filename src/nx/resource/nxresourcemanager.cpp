@@ -96,6 +96,15 @@ NXResourceManager::create(const char* name,
 }
 
 NXHdl
+NXResourceManager::createAndLoad(const char* name,
+                                 const char* path)
+{
+    NXHdl hdl = create(name, path);
+    load(hdl);
+    return hdl;
+}
+
+NXHdl
 NXResourceManager::registerResource(const NXResourcePtr_t &resource)
 {
     NXHdl hdl;

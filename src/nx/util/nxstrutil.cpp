@@ -17,10 +17,10 @@
 // along with NX. If not, see <http://www.gnu.org/licenses/>.
 //
 #include "nx/nxcore.h"
-
+#include <stdarg.h>
 #if defined(NX_SYSTEM_SDL2)
 #include <SDL2/SDL_stdinc.h>
-#elif defined(NX_SYSTEM_ANDROID)
+#else
 #define SDL_strtoll strtoll
 #define SDL_strtoull strtoull
 #define SDL_strtod strtod

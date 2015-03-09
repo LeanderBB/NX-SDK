@@ -10,14 +10,17 @@ set(PROJ_NAME nx)
 
 # SDL 2
 if(NOT DEFINED ANDROID)
-    set(NX_SYSTEM_SDL2 1 CACHE INTERNAL "Use System SDL2")
-    find_package(SDL2 REQUIRED)
+    if (NOT DEFINED NX_CONFIG_USE_GLFW)
+        set(NX_SYSTEM_SDL2 1 CACHE INTERNAL "Use System SDL2")
+    else()
+        set(NX_SYSTEM_GLFW 1 CACHE INTERNAL "Use GLFW System")
+    endif()
     include_directories(/usr/local/include)
     # OpenGL
     find_package(OpenGL REQUIRED)
 else()
     set(NX_SYSTEM_ANDROID 1 CACHE INTERNAL "Use System Android")
-    set(OPENGL_LIBRARIES EGL GLESv2)
+    set(OPENGL_LIBRARIES EGL GLESv3)
 endif()
 
 # check string functions
@@ -53,7 +56,6 @@ configure_file("cmake/nxconfig.h.cmake" "${NX_CONFIG_FILE}")
 
 set(NXCORE_INCLUDE_DIRS
 ${CMAKE_CURRENT_SOURCE_DIR}
-${SDL2_INCLUDE_DIR}
 ${NX_CONFIG_HEADER_DIR}
 ${OPENGL_INCLUDE_DIRS}
 ${CMAKE_CURRENT_BINARY_DIR}/genidl
@@ -62,14 +64,30 @@ ${CMAKE_CURRENT_BINARY_DIR}/genidl
 
 set(NXCORE_LIBRARIES
 ${PROJ_NAME}
-${SDL2_LIBRARY}
 ${OPENGL_LIBRARIES}
 ${NX_YAAF_LIBRARIES}
 ${ANDROID_LIBS}
 )
 
+if(DEFINED NX_SYSTEM_SDL2)
+set(NXCORE_LIBRARIES
+${NXCORE_LIBRARIES}
+${NX_SDL2_LIBRARIES}
+)
+endif()
+
+if(DEFINED NX_SYSTEM_GLFW)
+set(NXCORE_LIBRARIES
+${NXCORE_LIBRARIES}
+${NX_GLFW_LIBRARIES}
+)
+endif()
+
 if(UNIX)
 set(NXCORE_LIBRARIES ${NXCORE_LIBRARIES} dl)
+if(NOT ANDROID)
+set(NXCORE_LIBRARIES ${NXCORE_LIBRARIES} pthread)
+endif()
 endif()
 
 set(NXCORE_INCLUDE_DIRS ${NXCORE_INCLUDE_DIRS} PARENT_SCOPE)
@@ -154,8 +172,13 @@ set(PROJ_HDR
     nx/sys/android/nxsystemandroid.h
     nx/sys/android/nxwindowandroid.h
     nx/sys/nxapp.h
+    nx/sys/glfw/nxsystemglfw.h
+    nx/sys/glfw/nxwindowglfw.h
+    nx/sys/glfw/nxglfwinput.h
     nx/nx3d.h
-    nx/ogl/core44/flextGL.h
+    nx/ogl/core45/normal/flextGL.h
+    nx/ogl/core45/glfw3/flextGL.h
+    nx/ogl/core45/nxflexgl.h
     nx/ogl/nxoglinternal.h
     nx/ogl/nxogl.h
     nx/ogl/nxoglobj.h
@@ -164,6 +187,7 @@ set(PROJ_HDR
     nx/ogl/nxoglbuffer.h
     nx/ogl/nxgpuinterfaceogl.h
     nx/ogl/nxoglshaderinput.h
+    nx/ogl/nxoglrendertarget.h
     nx/gpu/nxgpubuffermanagerinterface.h
     nx/gpu/nxgpubuffermanagersimple.h
     nx/gpu/nxgpu.h
@@ -174,6 +198,7 @@ set(PROJ_HDR
     nx/gpu/nxgpushaderinput.h
     nx/gpu/nxgpumesh.h
     nx/gpu/nxgpusubmesh.h
+    nx/gpu/nxgpurendertarget.h
     nx/media/nximage.h
     nx/media/nx3dmodel.h
     nx/math/nx3dmath.h
@@ -184,6 +209,7 @@ set(PROJ_HDR
     nx/math/nxintersect.h
     nx/scene/nxscenebase.h
     nx/scene/nxentitybase.h
+    nx/scene/nxcomponents.h
     nx/resource/nxresourcemanager.h
     nx/resource/nxresource.h
     nx/resource/nximageresource.h
@@ -191,6 +217,7 @@ set(PROJ_HDR
     nx/resource/nx3dmodelresource.h
     nx/resource/nxgpuprogramresource.h
     nx/resource/nxgpumeshresource.h
+    nx/font/nxfont.h
 )
 
 
@@ -233,15 +260,19 @@ set(PROJ_SRC
     nx/sys/android/nxandroidinput.cpp
     nx/sys/android/nxsystemandroid.cpp
     nx/sys/android/nxwindowandroid.cpp
+    nx/sys/glfw/nxsystemglfw.cpp
+    nx/sys/glfw/nxwindowglfw.cpp
+    nx/sys/glfw/nxglfwinput.cpp
     nx/sys/nxapp.cpp
     nx/nx3d.cpp
-    nx/ogl/core44/flextGL.c
+    nx/ogl/core45/nxflexgl.cpp
     nx/ogl/nxogl.cpp
     nx/ogl/nxoglprogram.cpp
     nx/ogl/nxogltexture.cpp
     nx/ogl/nxoglbuffer.cpp
     nx/ogl/nxgpuinterfaceogl.cpp
     nx/ogl/nxoglshaderinput.cpp
+    nx/ogl/nxoglrendertarget.cpp
     nx/gpu/nxgpuprogramsource.cpp
     nx/gpu/nxgputexture.cpp
     nx/gpu/nxgpubuffer.cpp
@@ -249,6 +280,7 @@ set(PROJ_SRC
     nx/gpu/nxgpushaderinput.cpp
     nx/gpu/nxgpumesh.cpp
     nx/gpu/nxgpusubmesh.cpp
+    nx/gpu/nxgpurendertarget.cpp
     nx/media/nximage.cpp
     nx/media/nx3dmodel.cpp
     nx/math/nxtransform.cpp
@@ -263,6 +295,7 @@ set(PROJ_SRC
     nx/resource/nx3dmodelresource.cpp
     nx/resource/nxgpuprogramresource.cpp
     nx/resource/nxgpumeshresource.cpp
+    nx/font/nxfont.cpp
 )
 
 if(ANDROID)
@@ -271,6 +304,14 @@ endif()
 
 add_library(${PROJ_NAME} STATIC  ${PROJ_HDR} ${PROJ_SRC})
 add_dependencies(${PROJ_NAME} YAAF glm)
+
+if(DEFINED NX_SYSTEM_SDL2)
+add_dependencies(${PROJ_NAME} NXSDL2)
+endif()
+
+if(DEFINED NX_SYSTEM_GLFW)
+add_dependencies(${PROJ_NAME} GLFW)
+endif()
 
 # compile idls`
 NX_COMPILE_FLATBUFFER_IDL(${PROJ_NAME} ${CMAKE_CURRENT_BINARY_DIR}/genidl ${CMAKE_CURRENT_SOURCE_DIR}/idl PROJ_IDL)

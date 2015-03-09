@@ -22,6 +22,12 @@
 namespace nx
 {
 
+typedef void* (*fnMalloc_t)(size_t);
+typedef void  (*fnFree_t)(void*);
+typedef void* (*fnCalloc_t)(size_t, size_t);
+typedef void* (*fnRealloc_t)(void*, size_t);
+
+
 void*
 NXMalloc(size_t size);
 
@@ -73,6 +79,48 @@ public:
 private:
     NX_CPP_NO_COPY(NXScopedFree);
     void *_ptr;
+};
+
+class NXScopedAllocator
+{
+public:
+    virtual ~NXScopedAllocator();
+protected:
+    NXScopedAllocator(fnMalloc_t fnmalloc,
+                      fnFree_t fnfree,
+                      fnCalloc_t fncalloc,
+                      fnRealloc_t fnrealloc);
+protected:
+    fnMalloc_t const  _prevMalloc;
+    fnFree_t const    _prevFree;
+    fnCalloc_t const  _prevCalloc;
+    fnRealloc_t const _prevRealloc;
+};
+
+
+class NXScopedAllocatorTracker : protected NXScopedAllocator
+{
+public:
+
+    NXScopedAllocatorTracker(const char* const name);
+
+    ~NXScopedAllocatorTracker();
+
+private:
+    static void* malloc(const size_t size);
+
+    static void* calloc(const size_t s,
+                        const size_t size);
+
+    static void free(void *ptr);
+
+    static void* realloc(void *ptr,
+                         const size_t size);
+
+private:
+    const char* const _name;
+    size_t _bytes;
+    static NXScopedAllocatorTracker* spTracker;
 };
 
 }

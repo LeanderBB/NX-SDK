@@ -24,13 +24,19 @@ namespace nx
 static NXAllocTracker gTracker;
 #endif
 
+static fnMalloc_t g_fnmalloc = malloc;
+static fnFree_t g_fnfree = free;
+static fnCalloc_t g_fncalloc = calloc;
+static fnRealloc_t g_fnrealloc = realloc;
+
+
 void*
 NXMalloc(size_t size)
 {
 #if defined(NX_MEMORY_TRACK_ALLOCATIONS)
     return gTracker.malloc(size);
 #else
-    return malloc(size);
+    return g_fnmalloc(size);
 #endif
 }
 
@@ -40,7 +46,7 @@ NXFree(void* ptr)
 #if defined(NX_MEMORY_TRACK_ALLOCATIONS)
     gTracker.free(ptr);
 #else
-    free(ptr);
+    g_fnfree(ptr);
 #endif
 }
 
@@ -51,7 +57,7 @@ NXCalloc(size_t s,
 #if defined(NX_MEMORY_TRACK_ALLOCATIONS)
     return gTracker.calloc(s * size);
 #else
-    return calloc(s, size);
+    return g_fncalloc(s, size);
 #endif
 }
 
@@ -70,7 +76,7 @@ NXRealloc(void* src,
 #if defined(NX_MEMORY_TRACK_ALLOCATIONS)
     return gTracker.realloc(src, size);
 #else
-    return realloc(src, size);
+    return g_fnrealloc(src, size);
 #endif
 }
 
@@ -84,6 +90,119 @@ NXAllocatedMemory()
 #endif
 }
 
+
+NXScopedAllocator::~NXScopedAllocator()
+{
+    g_fnmalloc = _prevMalloc;
+    g_fnfree = _prevFree;
+    g_fncalloc = _prevCalloc;
+    g_fnrealloc = _prevRealloc;
+}
+
+NXScopedAllocator::NXScopedAllocator(fnMalloc_t fnmalloc,
+                                     fnFree_t fnfree,
+                                     fnCalloc_t fncalloc,
+                                     fnRealloc_t fnrealloc):
+    _prevMalloc(g_fnmalloc),
+    _prevFree(g_fnfree),
+    _prevCalloc(g_fncalloc),
+    _prevRealloc(g_fnrealloc)
+{
+    g_fnmalloc = fnmalloc;
+    g_fnfree = fnfree;
+    g_fncalloc = fncalloc;
+    g_fnrealloc = fnrealloc;
+}
+
+NXScopedAllocatorTracker* NXScopedAllocatorTracker::spTracker = nullptr;
+NXScopedAllocatorTracker::NXScopedAllocatorTracker(const char* const name):
+    NXScopedAllocator(NXScopedAllocatorTracker::malloc,
+                      NXScopedAllocatorTracker::free,
+                      NXScopedAllocatorTracker::calloc,
+                      NXScopedAllocatorTracker::realloc),
+    _name(name),
+    _bytes(0)
+{
+    if (spTracker)
+    {
+        //TODO: Multiple instances??
+        NXLogFatal("An instance of scoped tracker is already instanced");
+    }
+    spTracker = this;
+}
+
+NXScopedAllocatorTracker::~NXScopedAllocatorTracker()
+{
+    if (_bytes !=0)
+    {
+        NXLogError("NXScopedAllocatorTracker(%s): Did not release all memory in scope: %" NX_PRIsize " bytes left\n",
+                   _name, _bytes);
+    }
+}
+
+void*
+NXScopedAllocatorTracker::malloc(const size_t size)
+{
+    void* ptr = spTracker->_prevMalloc(size + sizeof(size_t));
+    if (ptr)
+    {
+        size_t* sptr = (size_t*)ptr;
+        sptr[0] = size;
+        NXAtomicAddSize((volatile nx_ssize_t*)&spTracker->_bytes, (nx_ssize_t)size);
+        return (char*)ptr + sizeof(size_t);
+    }
+    return NULL;
+}
+
+void*
+NXScopedAllocatorTracker::calloc(const size_t s,
+                                 const size_t size)
+{
+    void* ptr = spTracker->_prevCalloc(s, size + sizeof(size_t));
+    if (ptr)
+    {
+        size_t* sptr = (size_t*)ptr;
+        sptr[0] = size;
+        NXAtomicAddSize((volatile nx_ssize_t*)&spTracker->_bytes, (nx_ssize_t)size);
+        return (char*)ptr + sizeof(size_t);
+    }
+    return NULL;
+}
+
+void
+NXScopedAllocatorTracker::free(void *ptr)
+{
+    if (ptr)
+    {
+        size_t* sptr = (size_t*)ptr;
+        --sptr;
+        size_t size = *sptr;
+        NXAtomicAddSize((volatile nx_ssize_t*)&spTracker->_bytes, -((const nx_ssize_t)size));
+        spTracker->_prevFree(sptr);
+    }
+}
+
+void*
+NXScopedAllocatorTracker::realloc(void *ptr,
+                                  const size_t size)
+{
+    if (!ptr)
+    {
+        return NXScopedAllocatorTracker::malloc(size);
+    }
+    else
+    {
+        size_t* sptr = (size_t*)ptr;
+        --sptr;
+        size_t cur_size = *sptr;
+        nx_ssize_t isize = (nx_ssize_t)size;
+        nx_ssize_t icur_size = (nx_ssize_t)cur_size;
+        NXAtomicAddSize((volatile nx_ssize_t*)&spTracker->_bytes, (isize - icur_size));
+        sptr = (size_t*) spTracker->_prevRealloc(sptr, size + sizeof(size_t));
+        sptr[0] = size;
+        return ++sptr;
+    }
+}
 
 }
 

@@ -100,7 +100,7 @@ NXGLFormatToGPUTextureFormat(const nx_u32 format,
     nx_u64 combined = ((nx_u64)format) << 32 | internal_adjusted;
     nx_u64 cur_combined;
 
-    const NXOGLTextureDescription * p_descriptions = NXOGLTextureDescriptions();
+    const NXOGLTextureDescription * p_descriptions = nxOGLTextureDescriptions();
 
     for (int i = 0; i < kGPUTextureFormatTotal; ++i)
     {

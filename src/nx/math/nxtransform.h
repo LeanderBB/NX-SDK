@@ -32,13 +32,15 @@ public:
 
     void rotate(const glm::quat& rotation);
 
+    void rotatePrefix(const glm::quat& rotation);
+
     void identity();
 
     void scale(const glm::vec3& scale);
 
-    glm::mat4 toMatix() const;
+    glm::mat4 toMatrix() const;
 
-    glm::mat4 toMatixInv() const;
+    glm::mat4 toMatrixInv() const;
 
     glm::vec3 up() const;
 
@@ -67,6 +69,114 @@ protected:
     glm::quat _rotation;
 
 };
+
+
+NX_INLINE glm::quat
+nxQuat(const float deg,
+         const float x,
+         const float y,
+         const float z)
+{
+    return glm::angleAxis(glm::radians(deg), glm::vec3(x,y,z));
+}
+
+NX_INLINE glm::quat
+nxQuat(const float deg,
+         const glm::vec3& axis)
+{
+    return glm::angleAxis(glm::radians(deg), axis);
+}
+
+NX_INLINE glm::quat
+nxQuat(const float degx,
+                   const float degy,
+                   const float degz)
+{
+    return glm::quat(glm::vec3(glm::radians(degx),
+                               glm::radians(degy),
+                               glm::radians(degz)));
+}
+
+NX_INLINE glm::quat
+nxQuat(const glm::vec3& degs)
+{
+    return glm::quat(glm::vec3(glm::radians(degs.x),
+                               glm::radians(degs.y),
+                               glm::radians(degs.z)));
+}
+
+NX_INLINE glm::mat4
+nxRotate(const glm::quat& quat)
+{
+    return glm::mat4_cast(quat);
+}
+
+NX_INLINE glm::mat4
+nxRotate(const float deg,
+         const float x,
+         const float y,
+         const float z)
+{
+   return nxRotate(nxQuat(deg, x, y, z));
+}
+
+NX_INLINE glm::mat4
+nxRotate(const float deg,
+         const glm::vec3& axis)
+{
+    return nxRotate(nxQuat(deg, axis));
+}
+
+NX_INLINE glm::mat4
+nxRotate(const float degx,
+                   const float degy,
+                   const float degz)
+{
+    return nxRotate(nxQuat(degx, degy, degz));
+}
+
+NX_INLINE glm::mat4
+nxRotate(const glm::vec3& degs)
+{
+    return nxRotate(nxQuat(degs));
+}
+
+NX_INLINE glm::mat4
+nxTranslate(const glm::vec3& translate)
+{
+    return glm::translate(glm::mat4(), translate);
+}
+
+NX_INLINE glm::mat4
+nxTranslate(const float x,
+            const float y,
+            const float z)
+{
+    return glm::translate(glm::mat4(), glm::vec3(x, y, z));
+}
+
+NX_INLINE glm::mat4
+nxScale(const glm::vec3& scale)
+{
+    return glm::scale(glm::mat4(), scale);
+}
+
+NX_INLINE glm::mat4
+nxScale(const float x,
+        const float y,
+        const float z)
+{
+    return glm::scale(glm::mat4(), glm::vec3(x, y, z));
+}
+
+NX_INLINE glm::mat4
+nxScale(const float v)
+{
+    return glm::scale(glm::mat4(), glm::vec3(v));
+}
+
+
+
 }
 
 #endif

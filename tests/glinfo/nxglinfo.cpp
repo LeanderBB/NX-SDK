@@ -20,6 +20,7 @@
 #include "nx/nxcore.h"
 #include "nx/sys/nxapp.h"
 #include "nx/nx3d.h"
+#include "nx/gpu/nxgpuinterface.h"
 
 class NXGLInfoApp : public nx::NXApp
 {
@@ -47,13 +48,23 @@ public:
 
     virtual void onWindowCreated()
     {
+        _gpu = nx::NXGPUInterface::create();
+        if (!_gpu->init())
+        {
+            nx::NXLogError("Failed to initialize GPU Interface");
+            quit();
+        }
         nx::NX3D::log3DInfo();
     }
 
     virtual void onWindowWillBeDestroyed()
     {
-
+        _gpu->shutdown();
+        NX_SAFE_DELETE(_gpu);
     }
+
+private:
+    nx::NXGPUInterface* _gpu;
 
 };
 

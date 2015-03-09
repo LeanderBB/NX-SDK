@@ -108,7 +108,7 @@ static bool setSDLFlags(const bool depth,
 #else
     NX_SET_SDL_GL_ATTR(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
     context_major = 4;
-    context_minor = 4;
+    context_minor = 5;
 #endif
     NX_SET_SDL_GL_ATTR(SDL_GL_CONTEXT_MAJOR_VERSION, context_major);
     NX_SET_SDL_GL_ATTR(SDL_GL_CONTEXT_MINOR_VERSION, context_minor);

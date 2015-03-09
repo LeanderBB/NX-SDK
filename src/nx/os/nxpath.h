@@ -75,6 +75,13 @@ public:
     static bool fileSize(size_t &out, const char* path);
 
     static const char* fileExtension(const char* path);
+
+    static const char* basename(const char* path,
+                                const char sep = sPathSepChr);
+
+    static bool basenameNoExt(NXString& out,
+                              const char* path,
+                              const char sep = sPathSepChr);
 };
 
 }

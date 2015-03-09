@@ -28,7 +28,7 @@ namespace nx
 class NXIOBase;
 struct idlModel;
 struct idlMesh;
-class NXGPUShaderInputDesc;
+struct NXGPUShaderInputDesc;
 
 class NX3DModelMesh
 {

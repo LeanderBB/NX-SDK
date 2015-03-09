@@ -85,6 +85,11 @@ enum OutputSeparateBufferBinding
     kOutputSeparateBufferBindingMax
 };
 
+enum InterleavedBufferBinding
+{
+    kInterLeavedBufferBindingDefault = 0
+};
+
 class NXOutputState
 {
 public:

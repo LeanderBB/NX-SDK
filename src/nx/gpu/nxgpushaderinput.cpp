@@ -269,6 +269,34 @@ nxGPUBufferStride(const GPUDataType type,
     return count * data_size;
 }
 
+
+const char*
+nxGPUShaderInputIdxToStr(const GPUShaderInputIdx idx)
+{
+    static const char* strings[] =
+    {
+        "kGPUShaderInputIdxVertices",
+        "kGPUShaderInputIdxNormals",
+        "kGPUShaderInputIdxTexCoord0",
+        "kGPUShaderInputIdxTexCoord1",
+        "kGPUShaderInputIdxBinormal",
+        "kGPUShaderInputIdxTangent",
+        "kGPUShaderInputIdxColor",
+        "kGPUShaderInputIdxOther0",
+        "kGPUShaderInputIdxOther1",
+        "kGPUShaderInputIdxOther2",
+        "kGPUShaderInputIdxOther3",
+        "kGPUShaderInputIdxOther4",
+        "kGPUShaderInputIdxOther5",
+        "kGPUShaderInputIdxOther6",
+        "kGPUShaderInputIdxOther7",
+        "kGPUShaderInputIdxOther8",
+        "kGPUShaderInputIdxOther9",
+        "kGPUShaderInputIdxOther10"
+    };
+    return (idx < kGPUShaderInputIdxMax) ? strings[idx] : "Uknown Idx";
+}
+
 NXGPUShaderInput::NXGPUShaderInput():
     _inputs(NX_GPU_DEFAULT_MAX_SHADER_INPUT),
     _bufferBindings(NX_GPU_DEFAULT_MAX_SHADER_INPUT)

@@ -31,7 +31,7 @@ struct NXGPUBufferDesc
     GPUBufferType type = kGPUBufferTypeData;
     nx_u32 mode = 0;
     nx_u32 size = 0;
-    nx_u32 flags = 0;
+    nx_u32 flags = kGPUBufferAccessStaticBit;
     const void* data = nullptr;
 };
 

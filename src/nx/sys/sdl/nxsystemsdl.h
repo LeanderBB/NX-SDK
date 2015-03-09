@@ -54,6 +54,8 @@ protected:
         return _pWindow;
     }
 
+    bool shouldQuitImp() const { return false; };
+
 private:
     static int systemEventHandler(void *pUserData,
                                   SDL_Event* pEvent);

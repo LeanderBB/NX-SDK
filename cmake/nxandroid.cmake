@@ -6,7 +6,7 @@
 
 find_program(NX_ANT ant)
 
-if(${NX_ANT} EQUAL NX_ANT-NOTFOUND)
+if("${NX_ANT}" STREQUAL "NX_ANT-NOTFOUND")
     message(SEND_ERROR "Could not find ant executable")
 else()
     message(STATUS "Found ant: ${NX_ANT}")

@@ -52,6 +52,8 @@ protected:
                          NXEventManager* pEvtManager);
 
     NXWindow* windowImp();
+
+    bool shouldQuitImp() const { return false; };
 private:
 
     bool createWindowInCallback(NXEventManager* pEvtManager);

@@ -45,6 +45,9 @@ public:
     NXHdl create(const char* name,
                  const char* path);
 
+    NXHdl createAndLoad(const char* name,
+                        const char* path);
+
     NXHdl registerResource(const NXResourcePtr_t& resource);
 
     void unregisterResource(const NXHdl hdl);

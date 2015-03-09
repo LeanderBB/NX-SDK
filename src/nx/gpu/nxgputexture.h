@@ -189,6 +189,12 @@ struct NXGPUTextureDesc
     nx_u32 depth = 1;
     nx_u32 nArray = 0;
     nx_u32 nMipMap = 1;
+    nx_u32 other = 0;
+};
+
+enum GPUTextureDescOther
+{
+    kGPUTextureDescOtherDepthRefCompare  = NX_BIT(0)
 };
 
 class NXGPUTexture

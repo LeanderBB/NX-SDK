@@ -56,6 +56,8 @@ bool nxGPUBufferLayoutComponentInfo(NXGPUShaderInputDesc& info,
 nx_u32 nxGPUBufferStride(const GPUDataType type,
                          const nx_u32 count);
 
+const char* nxGPUShaderInputIdxToStr(const GPUShaderInputIdx idx);
+
 class NXGPUShaderInput
 {
 public:

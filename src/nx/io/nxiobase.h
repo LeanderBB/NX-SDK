@@ -81,6 +81,17 @@ public:
         return _size;
     }
 
+    virtual bool directMemoryAccess() const
+    {
+        return false;
+    }
+
+    virtual const void* directMemoryAccessPtr(const size_t offset) const
+    {
+        (void) offset;
+        return nullptr;
+    }
+
 protected:
     NXIOBase(const size_t size,
              const nx_u32 state) :

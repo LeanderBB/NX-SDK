@@ -26,7 +26,16 @@
 namespace nx
 {
 
-nx_u32 NXOGLBufferType(const GPUBufferType type);
+nx_u32 nxOGLBufferType(const GPUBufferType type);
+
+nx_u32 nxOGLBufferAccess(const nx_u32 flags);
+
+
+enum OGLBufferFlags
+{
+    kOGLBufferFlagMappedBit = NX_BIT(1),
+    kOGLBufferFlagImmutable = NX_BIT(2)
+};
 
 class NXOGLBuffer : public NXOGLObj
 {
@@ -45,11 +54,11 @@ public:
 
     nx_u32 size() const;
 
+    bool mapped() const;
 
+    bool immutable() const;
 
 protected:
-
-
 
     void allocateStorage(const void *ptr = nullptr);
 
@@ -59,7 +68,7 @@ private:
 protected:
     NXGPUBufferDesc _desc;
     nx_u32 _oglType;
-    bool _mapped;
+    nx_u32 _flags;
 };
 
 typedef NXTLSharedPtr<NXOGLBuffer> NXOGLBufferPtr_t;

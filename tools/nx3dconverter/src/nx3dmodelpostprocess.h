@@ -53,6 +53,8 @@ private:
 
     bool buildSeparate();
 
+    bool buildInterleaved();
+
 private:
     NXInputStateVec_t _input;
     NXOutputState _output;

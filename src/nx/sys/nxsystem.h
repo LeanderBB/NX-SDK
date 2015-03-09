@@ -22,6 +22,8 @@
 #include "nx/event/nxeventmanager.h"
 #if defined(NX_SYSTEM_SDL2)
 #include "nx/sys/sdl/nxsystemsdl.h"
+#elif defined(NX_SYSTEM_GLFW)
+#include "nx/sys/glfw/nxsystemglfw.h"
 #elif defined(NX_SYSTEM_ANDROID)
 #include "nx/sys/android/nxsystemandroid.h"
 #else
@@ -39,8 +41,11 @@ class NXSystem : NXSystemImp
 {
 public:
 
+    static NXSystem* instance();
+
     NXSystem();
 
+    ~NXSystem();
 
     bool init(const int argc,
               const char** argv,
@@ -63,7 +68,7 @@ public:
 
     bool shouldQuit() const
     {
-        return _quit;
+        return _quit || NXSystemImp::shouldQuitImp();
     }
 
     bool paused() const

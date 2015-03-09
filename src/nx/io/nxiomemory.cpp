@@ -149,4 +149,10 @@ NXIOMemory::close()
     _buffer.write = nullptr;
 }
 
+const void*
+NXIOMemory::directMemoryAccessPtr(const size_t offset) const
+{
+    return _buffer.read + offset;
+}
+
 }

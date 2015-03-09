@@ -40,11 +40,21 @@ public:
 
 int main()
 {
-    auto ptr = nx::nxMakeTLShared<TestClass>("ptr1");
+    nx::NXScopedAllocatorTracker alloc_tracker("scoped_tracker");
+    (void) alloc_tracker;
+    nx::NXTLWeakPtr<TestClass> weakptr;
     {
-        auto ptr2 = nx::nxMakeTLShared<TestClass>("ptr2");
-
-        ptr = ptr2;
+        auto ptr = nx::nxMakeTLShared<TestClass>("ptr1");
+        weakptr = ptr;
+        auto weak_lock = weakptr.lock();
+        nx::NXLog("weakptr: expired %d", weakptr.expired());
+        {
+            auto ptr2 = nx::nxMakeTLShared<TestClass>("ptr2");
+            ptr = ptr2;
+            nx::NXLog("weakptr: expired %d", weakptr.expired());
+        }
+        weak_lock.reset();
+        nx::NXLog("weakptr: expired %d", weakptr.expired());
     }
     return EXIT_SUCCESS;
 }

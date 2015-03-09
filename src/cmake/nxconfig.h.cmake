@@ -56,6 +56,7 @@
 
 // system interface
 #cmakedefine NX_SYSTEM_SDL2 @NX_SYSTEM_SDL2@
+#cmakedefine NX_SYSTEM_GLFW @NX_SYSTEM_GLFW@
 #cmakedefine NX_SYSTEM_ANDROID @NX_SYSTEM_ANDROID@
 
 // whether to track memory allocations

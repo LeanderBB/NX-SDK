@@ -47,11 +47,13 @@ const char* NXPath::sEnvSepStr = ":";
 const char NXPath::sEnvSepChr = ':';
 const char* NXPath::sPathSepStr = "/";
 const char NXPath::sPathSepChr = '/';
+static const int sPathAbsOffset = 1;
 #else
 const char* NXPath::sEnvSepStr = ":";
 const char NXPath::sEnvSepChr = ':';
 const char* NXPath::sPathSepStr = "/";
 const char NXPath::sPathSepChr = '/';
+static const int sPathAbsOffset = 3;
 #endif
 
 NXString
@@ -152,7 +154,14 @@ bool
 NXPath::mkdir(const char* dir)
 {
     NXString path(dir);
-    return NXMakeDirRecursive(&path[0], 0);
+    if (NXPath::isAbsolute(dir) && path.length() > sPathAbsOffset)
+    {
+        return NXMakeDirRecursive(&path[0], &path[sPathAbsOffset]);
+    }
+    else
+    {
+        return NXMakeDirRecursive(&path[0], &path[0]);
+    }
 }
 
 bool
@@ -375,6 +384,52 @@ NXPath::fileExtension(const char* path)
         res = res + 1;
     }
     return res;
+}
+
+const char*
+NXPath::basename(const char* path,
+                 const char sep)
+{
+    const char* res = strrchr(path, sep);
+    if (res)
+    {
+        res = res + 1;
+    }
+    return res;
+}
+
+bool
+NXPath::basenameNoExt(NXString& out,
+                      const char* path,
+                      const char sep)
+{
+    const char* base = basename(path, sep);
+    if (!base)
+    {
+        return false;
+    }
+    else
+    {
+        const char* ext = NXPath::fileExtension(base);
+        if (ext)
+        {
+            if ((ext - base -1) > 0)
+            {
+                out.clear();
+                out = NXString(base, (ext - base -1));
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else
+        {
+            out = base;
+            return true;
+        }
+    }
 }
 
 }

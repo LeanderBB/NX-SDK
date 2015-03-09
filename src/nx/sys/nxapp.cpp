@@ -31,8 +31,8 @@ NXApp::NXApp(const char *name):
 {
     _options.width = 1280;
     _options.height = 720;
-    _options.depth = false;
-    _options.stencil = false;
+    _options.depth = true;
+    _options.stencil = true;
     _options.fullscreen = false;
     _options.resizable = true;
 #if defined(NX_DEBUG)
@@ -100,6 +100,10 @@ int NXApp::run(const int argc,
 
     NXLogDebug("NXApp: running...");
 
+#if defined(NX_SYSTEM_GLFW)
+    // FIXME: Get callback from window when available to unpause the system
+    _system.setPaused(false);
+#endif
     while (!_system.shouldQuit())
     {
         if(_system.tick())

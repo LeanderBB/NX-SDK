@@ -86,7 +86,10 @@ NXAssimpConverter::convert(NXInputStateVec_t& output,
 {
 
     (void) flags;
-    unsigned int aiflags = aiProcessPreset_TargetRealtime_Quality | aiProcess_CalcTangentSpace;
+    unsigned int aiflags = aiProcess_GenSmoothNormals |
+            aiProcess_CalcTangentSpace |
+            aiProcess_Triangulate |
+            aiProcess_GenUVCoords;
 
     Assimp::Importer importer;
     const aiScene* pScene = importer.ReadFile(file, aiflags);
@@ -185,15 +188,17 @@ NXAssimpConverter::convert(NXInputStateVec_t& output,
             for(unsigned int i = 0; i < p_mesh->mNumFaces; ++i)
             {
                 const aiFace* p_face = &p_mesh->mFaces[i];
-                if (p_face->mNumIndices == 3)
+                if (p_face->mNumIndices <= 3)
                 {
-                    cur_state.indices.push_back(p_face->mIndices[0]);
-                    cur_state.indices.push_back(p_face->mIndices[1]);
-                    cur_state.indices.push_back(p_face->mIndices[2]);
+                    for (unsigned int j = 0; j < p_face->mNumIndices; ++j)
+                    {
+                        cur_state.indices.push_back(p_face->mIndices[j]);
+                    }
                 }
                 else
                 {
-                    NXLogError("Face (%d) has more than 3 indices", m);
+                    NXLogError("Mesh (%u) Face %u has more than 3 indices: nIndices=%u",
+                               m, i, p_face->mNumIndices);
                     return false;
                 }
             }

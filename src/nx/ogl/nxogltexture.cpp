@@ -101,12 +101,15 @@ NXBindTexture(const nx_u32 hdl,
 
 // -- NXOGLTexutre Formats------------------------------------------------------
 
-#define NX_OGLTEXINFO(tex,format, internal, datatype, compressed) \
-{ format, internal, datatype, compressed}
+#define NX_OGLTEXINFO(tex,format, internal, datatype, compressed, depth) \
+{ format, internal, datatype, compressed, depth, 0}
 #define NX_OGLTEXINFO_UNCOMPRESSED(tex, format, internal, datatype) \
-    NX_OGLTEXINFO(tex, format, internal, datatype, 0)
+    NX_OGLTEXINFO(tex, format, internal, datatype, 0, 0)
+#define NX_OGLTEXINFO_UNCOMPRESSED_DEPTH(tex, format, internal, datatype) \
+    NX_OGLTEXINFO(tex, format, internal, datatype, 0, 1)
+
 #define NX_OGLTEXINFO_COMPRESSED(tex, format, internal) \
-    NX_OGLTEXINFO(tex, format, internal, GL_INVALID_ENUM, 1)
+    NX_OGLTEXINFO(tex, format, internal, GL_INVALID_ENUM, 1, 0)
 
 static const NXOGLTextureDescription gOGLTextureDescriptions [] =
 {
@@ -142,11 +145,11 @@ static const NXOGLTextureDescription gOGLTextureDescriptions [] =
     NX_OGLTEXINFO_UNCOMPRESSED(kGPUTextureFormatRG8_SNORM, GL_RG, GL_RG8_SNORM, GL_BYTE),
     NX_OGLTEXINFO_UNCOMPRESSED(kGPUTextureFormatRGB8_SNORM, GL_RGB, GL_RGB8_SNORM, GL_BYTE),
     NX_OGLTEXINFO_UNCOMPRESSED(kGPUTextureFormatRGBA8_SNORM, GL_RGBA, GL_RGBA8_SNORM, GL_BYTE),
-    NX_OGLTEXINFO_UNCOMPRESSED(kGPUTextureFormatDepth16, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT16, GL_UNSIGNED_SHORT),
-    NX_OGLTEXINFO_UNCOMPRESSED(kGPUTextureFormatDepth24, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT24, GL_UNSIGNED_INT),
-    NX_OGLTEXINFO_UNCOMPRESSED(kGPUTextureFormatDepth32, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT32, GL_UNSIGNED_INT),
-    NX_OGLTEXINFO_UNCOMPRESSED(kGPUTextureFormatDepth32F, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT32F, GL_FLOAT),
-    NX_OGLTEXINFO_UNCOMPRESSED(kGPUTextureFormatDepth24Stencil8, GL_DEPTH_STENCIL, GL_DEPTH24_STENCIL8, GL_UNSIGNED_INT_24_8),
+    NX_OGLTEXINFO_UNCOMPRESSED_DEPTH(kGPUTextureFormatDepth16, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT16, GL_UNSIGNED_SHORT),
+    NX_OGLTEXINFO_UNCOMPRESSED_DEPTH(kGPUTextureFormatDepth24, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT24, GL_UNSIGNED_INT),
+    NX_OGLTEXINFO_UNCOMPRESSED_DEPTH(kGPUTextureFormatDepth32, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT32, GL_UNSIGNED_INT),
+    NX_OGLTEXINFO_UNCOMPRESSED_DEPTH(kGPUTextureFormatDepth32F, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT32F, GL_FLOAT),
+    NX_OGLTEXINFO_UNCOMPRESSED_DEPTH(kGPUTextureFormatDepth24Stencil8, GL_DEPTH_STENCIL, GL_DEPTH24_STENCIL8, GL_UNSIGNED_INT_24_8),
     // Compressed
     // Tex format internal
     NX_OGLTEXINFO_COMPRESSED(kGPUTextureFormatRGB8_ETC2, GL_RGB, GL_COMPRESSED_RGB8_ETC2 ),
@@ -214,12 +217,12 @@ NXOGLTextureType(const GPUTextureType type)
 
 
 const NXOGLTextureDescription*
-NXOGLTextureDescriptionForGPUTextureFormat(const GPUTextureFormat format)
+nxOGLTextureDescriptionForGPUTextureFormat(const GPUTextureFormat format)
 {
     return (format < kGPUTextureFormatTotal) ? &gOGLTextureDescriptions[format] : nullptr;
 }
 
-const NXOGLTextureDescription* NXOGLTextureDescriptions()
+const NXOGLTextureDescription* nxOGLTextureDescriptions()
 {
     return &gOGLTextureDescriptions[0];
 }
@@ -318,7 +321,7 @@ NXOGLTexture::upload(const void* pData,
     if (oglHdlValid())
     {
         // TODO: Use DSA extensions
-        const NXOGLTextureDescription* p_info = NXOGLTextureDescriptionForGPUTextureFormat(_desc.format);
+        const NXOGLTextureDescription* p_info = nxOGLTextureDescriptionForGPUTextureFormat(_desc.format);
         NX_ASSERT(p_info);
         switch(_oglType)
         {
@@ -385,7 +388,7 @@ NXOGLTexture::NXOGLTexture(const NXGPUTextureDesc& desc):
 bool
 NXOGLTexture::allocateStorage()
 {
-    const NXOGLTextureDescription* p_info = NXOGLTextureDescriptionForGPUTextureFormat(_desc.format);
+    const NXOGLTextureDescription* p_info = nxOGLTextureDescriptionForGPUTextureFormat(_desc.format);
     if (!p_info)
     {
         const NXGPUTetureFormatDescription* p_texi = NXGPUTextureFormatGetDescription(_desc.format);
@@ -430,9 +433,16 @@ NXOGLTexture::allocateStorage()
 
 
     // set default wrap mode
-    glTextureParameteri(oglHdl(), GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTextureParameteri(oglHdl(), GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    glTextureParameteri(oglHdl(), GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
+    glTextureParameteri(oglHdl(), GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTextureParameteri(oglHdl(), GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTextureParameteri(oglHdl(), GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    if (p_info->depthComponent && _desc.other & kGPUTextureDescOtherDepthRefCompare)
+    {
+         glTextureParameteri(oglHdl(), GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+         glTextureParameteri(oglHdl(), GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+    }
+
     return true;
 }
 

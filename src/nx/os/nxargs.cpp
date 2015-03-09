@@ -205,6 +205,20 @@ NXArgs::get(const nx_u32 id,
     }
 }
 
+const char*
+NXArgs::getSingleArg(const nx_u32 id) const
+{
+    const Option* opt = findOption(id);
+    if(opt && opt->size == 1)
+    {
+        return opt->value[0];
+    }
+    else
+    {
+        return nullptr;
+    }
+}
+
 void
 NXArgs::clear()
 {
